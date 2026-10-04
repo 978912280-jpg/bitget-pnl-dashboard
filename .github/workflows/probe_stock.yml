@@ -1,0 +1,125 @@
+name: 美股账户与划转记录探测
+on:
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 探测
+        env:
+          BITGET_API_KEY: ${{ secrets.BITGET_API_KEY }}
+          BITGET_API_SECRET: ${{ secrets.BITGET_API_SECRET }}
+          BITGET_API_PASSPHRASE: ${{ secrets.BITGET_API_PASSPHRASE }}
+        run: |
+          cat > probe_stock.py <<'PY'
+          import json, hmac, hashlib, base64, time, urllib.request, urllib.error, ssl, os
+          from urllib.parse import urlencode
+
+          API_KEY = os.environ["BITGET_API_KEY"]
+          API_SECRET = os.environ["BITGET_API_SECRET"]
+          PASSPHRASE = os.environ["BITGET_API_PASSPHRASE"]
+          BASE = "https://api.bitget.com"
+          ctx = ssl.create_default_context()
+
+          def sign(ts, method, path, body=""):
+              msg = ts + method.upper() + path + body
+              return base64.b64encode(hmac.new(API_SECRET.encode(), msg.encode(), hashlib.sha256).digest()).decode()
+
+          def req(method, path, params=None, body_str=""):
+              qs = urlencode(params) if params else ""
+              full_path = path + ("?" + qs if qs else "")
+              ts = str(int(time.time() * 1000))
+              sig = sign(ts, method, full_path, body_str)
+              headers = {"ACCESS-KEY": API_KEY, "ACCESS-SIGN": sig, "ACCESS-TIMESTAMP": ts,
+                         "ACCESS-PASSPHRASE": PASSPHRASE, "Content-Type": "application/json"}
+              try:
+                  r = urllib.request.Request(BASE + full_path, data=body_str.encode() if body_str else None,
+                                              headers=headers, method=method.upper())
+                  with urllib.request.urlopen(r, context=ctx, timeout=15) as resp:
+                      data = resp.read().decode()
+                      try: return resp.status, json.loads(data)
+                      except: return resp.status, data[:500]
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode()[:500]
+                  try: return e.code, json.loads(body)
+                  except: return e.code, body
+              except Exception as e:
+                  return -1, str(e)[:100]
+
+          def show(label, code, data, full=False):
+              if isinstance(data, dict):
+                  msg = data.get("msg", "")
+                  d = data.get("data", "")
+                  if code == 404:
+                      print(f"  [404] {label}")
+                  elif full:
+                      print(f"  [{code}] {label} -> {json.dumps(data, ensure_ascii=False)[:400]}")
+                  elif isinstance(d, list) and d:
+                      print(f"  [HIT] {label} -> {len(d)} items: {json.dumps(d[0], ensure_ascii=False)[:150]}")
+                  elif isinstance(d, dict) and d:
+                      print(f"  [HIT] {label} -> keys={list(d.keys())[:10]}: {json.dumps(d, ensure_ascii=False)[:200]}")
+                  else:
+                      print(f"  [{code}] {label} -> msg={msg[:80]}, data={str(d)[:80]}")
+              else:
+                  print(f"  [{code}] {label} -> {str(data)[:100]}")
+
+          # 组1: all-account-balance 完整响应（看所有账户类型）
+          print("=== 组1: all-account-balance 完整响应 ===")
+          show("all-account-balance", *req("GET", "/api/v2/account/all-account-balance"), full=True)
+
+          # 组2: 资金账户/股票账户资产
+          print("\n=== 组2: 资金/股票账户资产 ===")
+          for ep in ["/api/v3/account/funding-assets",
+                     "/api/v2/account/funding-assets",
+                     "/api/v3/account/stock-assets",
+                     "/api/v2/account/stock-assets",
+                     "/api/v3/earn/stock-assets",
+                     "/api/v2/earn/stock-assets",
+                     "/api/v3/stock/account/assets",
+                     "/api/v2/stock/account/assets",
+                     "/api/v3/stockplus/assets",
+                     "/api/v2/stockplus/assets",
+                     "/api/v3/cfd/account/assets",
+                     "/api/v2/cfd/account/assets",
+                     "/api/v3/account/all-assets",
+                     "/api/v2/account/assets"]:
+              show(ep, *req("GET", ep))
+
+          # 组3: 内部划转记录
+          print("\n=== 组3: 内部划转记录 ===")
+          now_ms = int(time.time() * 1000)
+          start_ms = now_ms - 7 * 86400 * 1000  # 7天前
+          for ep, params in [
+              ("/api/v2/spot/wallet/transfer-records", None),
+              ("/api/v2/spot/wallet/transfer-records", {"startTime": str(start_ms), "endTime": str(now_ms)}),
+              ("/api/v2/spot/wallet/transfer-record", None),
+              ("/api/v3/account/transfer-records", None),
+              ("/api/v3/account/transfer-record", None),
+              ("/api/v3/account/internal-transfer-records", None),
+              ("/api/v2/account/transfer-records", None),
+              ("/api/v2/wallet/transfer-records", None),
+              ("/api/v2/wallet/transfer-record", None),
+              ("/api/v3/wallet/transfer-records", None),
+          ]:
+              label = ep + (f"?{params}" if params else "")
+              show(label, *req("GET", ep, params))
+
+          # 组4: 股票行情/持仓相关
+          print("\n=== 组4: 股票行情/持仓 ===")
+          for ep in ["/api/v3/stock/market/tickers",
+                     "/api/v2/stock/market/tickers",
+                     "/api/v3/stock/position",
+                     "/api/v2/stock/position",
+                     "/api/v3/stock/account/balance",
+                     "/api/v2/stock/account/balance",
+                     "/api/v3/cfd/position",
+                     "/api/v2/cfd/position",
+                     "/api/v3/cfd/account/balance"]:
+              show(ep, *req("GET", ep))
+
+          print("\n=== 探测完成 ===")
+          PY
+          python3 probe_stock.py
