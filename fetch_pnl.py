@@ -389,6 +389,11 @@ def send_bark(snap: dict):
     wit = snap.get("withdrawUsdt", 0) or 0
     spot = snap.get("spotUsdt", 0) or 0
     earn = snap.get("earnUsdt", 0) or 0
+    poolx = snap.get("poolx", {}) or {}
+    if poolx:
+        poolx_str = ", ".join(f"{c} {a:g}" for c, a in sorted(poolx.items()))
+    else:
+        poolx_str = "无"
 
     title = f"Bitget 资产日报 · {snap['date']}"
     body = (
@@ -396,7 +401,8 @@ def send_bark(snap: dict):
         f"今日盈亏: {daily:+.2f} USDT\n"
         f"总盈亏: {cum:+.2f} USDT\n"
         f"净出入金: {net_flow:+.2f}（充入 {dep:.2f} / 提出 {wit:.2f}）\n"
-        f"现货: {spot:,.2f} / 理财: {earn:,.2f}"
+        f"现货: {spot:,.2f} / 理财: {earn:,.2f}\n"
+        f"PoolX: {poolx_str}"
     )
     payload = {
         "title": title,
@@ -468,6 +474,7 @@ def main():
           + (f"（{flow_note}）" if flow_note else ""))
     print("[5/5] 汇总快照…")
     snap = build_snapshot(spot, earn, prices, dep_usdt, wit_usdt, flow_note)
+    snap["poolx"] = manual  # 记录手动补充的 PoolX 持仓，供 Bark 推送核对
     if snap["missing"]:
         print(f"[warn] 以下币种无 USDT 行情，未计入总值：{', '.join(snap['missing'])}")
 
