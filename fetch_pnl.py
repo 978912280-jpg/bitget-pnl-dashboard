@@ -243,6 +243,37 @@ def load_history() -> list:
     return []
 
 
+POOLX_FILE = ROOT / "data" / "poolx_manual.json"
+
+
+def load_manual_poolx() -> dict:
+    """
+    手动补充无法通过 API 读取的锁仓持仓（如 PoolX）。
+    格式：{"BTC": {"amount": 0.0717, "ends": "2026-10-04"}, ...}
+    结束日期(ends)已过的条目自动忽略——此时币已回到现货账户，由 API 自动统计，避免重复计。
+    """
+    if not POOLX_FILE.exists():
+        return {}
+    try:
+        raw = json.loads(POOLX_FILE.read_text("utf-8"))
+    except Exception as exc:
+        print(f"[warn] 读取 {POOLX_FILE.name} 失败：{exc}")
+        return {}
+    today = datetime.now(BEIJING).strftime("%Y-%m-%d")
+    out = {}
+    for coin, cfg in (raw or {}).items():
+        if not isinstance(cfg, dict):
+            continue
+        ends = str(cfg.get("ends") or "")
+        if ends and ends < today:
+            print(f"      [info] {coin} PoolX 已于 {ends} 结束，跳过手动补充（届时由现货接口自动统计）")
+            continue
+        amt = _num(cfg.get("amount"))
+        if amt > 1e-12:
+            out[coin.upper()] = amt
+    return out
+
+
 def save_history(history: list):
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     DATA_FILE.write_text(json.dumps(history, ensure_ascii=False, indent=2), "utf-8")
@@ -272,6 +303,13 @@ def main():
     print("[2/4] 读取理财(Earn)持仓…")
     earn = fetch_earn(api_key, secret, passphrase)
     print(f"      理财币种数：{len(earn)}")
+    # 手动补充 PoolX 等无 API 的锁仓持仓（带结束日期，自动失效）
+    manual = load_manual_poolx()
+    if manual:
+        print(f"      [info] 手动补充锁仓持仓：{', '.join(f'{c} {v}' for c, v in manual.items())}")
+        for coin, amt in manual.items():
+            earn[coin] = earn.get(coin, 0.0) + amt
+        print(f"      补充后理财币种数：{len(earn)}")
     print("[3/4] 拉取行情价…")
     prices = fetch_prices()
     print(f"      行情币种数：{len(prices)}")

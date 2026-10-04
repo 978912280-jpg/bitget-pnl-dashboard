@@ -73,7 +73,7 @@
     <span class="t">口径说明：</span>
     ①「今日净值变化」= 今日总净值 − 上一快照总净值，<b class="pos" style="color:var(--neg)">包含当日充提与币价波动</b>；<br>
     ②「行情盈亏」仅按各币当日涨跌幅 × 持仓市值估算，不含充提，作为市场驱动参考；<br>
-    ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计，正是现货 PNL 的盲区所在。
+    ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计；PoolX 等锁仓产品无公开 API，通过 data/poolx_manual.json 手动补充，结束日期过后自动失效（币回到现货后由接口自动统计）。
   </footer>
 </div>
 
