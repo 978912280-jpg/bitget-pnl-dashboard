@@ -24,7 +24,7 @@
   h1 .dot{color:var(--accent)}
   .sub{color:var(--muted);font-size:13px;margin-top:6px}
   .update{color:var(--faint);font-size:12px;white-space:nowrap}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
   .kpi .lab{color:var(--muted);font-size:12px;margin-bottom:8px}
   .kpi .val{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px}
@@ -32,6 +32,27 @@
   .kpi .delta{font-size:12px;margin-top:7px;font-variant-numeric:tabular-nums}
   .pos{color:var(--pos)} .neg{color:var(--neg)} .muted{color:var(--muted)} .accent{color:var(--accent)}
   .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .holdings{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+  .holdings h2{margin:0 0 3px;font-size:16px}
+  .holdings .desc{color:var(--muted);font-size:12px;margin-bottom:10px}
+  .holdings table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .holdings th{text-align:left;color:var(--muted);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px}
+  .holdings th.num,.holdings td.num{text-align:right}
+  .holdings td{padding:11px 10px;border-bottom:1px solid rgba(36,48,73,0.5);vertical-align:middle}
+  .holdings .coin-cell{display:flex;align-items:center;gap:10px}
+  .holdings .coin-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#0b1020;flex-shrink:0}
+  .holdings .coin-name{font-weight:600;font-size:14px}
+  .holdings .coin-full{color:var(--muted);font-size:11px;margin-top:1px}
+  .holdings .amt{font-variant-numeric:tabular-nums;font-weight:500}
+  .holdings .val{font-variant-numeric:tabular-nums;font-weight:600}
+  .holdings .pct-text{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted)}
+  .holdings .pct-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:5px}
+  .holdings .pct-fill{height:100%;border-radius:2px}
+  .holdings tfoot td{font-weight:700;border-top:1px solid var(--border);border-bottom:none;padding-top:13px}
+  .holdings .kind-tag{font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;white-space:nowrap;display:inline-block}
+  .holdings .kind-tag.spot{background:rgba(79,140,255,0.15);color:#7aa8ff}
+  .holdings .kind-tag.earn{background:rgba(240,180,41,0.15);color:#e8c468}
+  .holdings .kind-tag.mix{background:rgba(120,200,140,0.15);color:#8fd4a0}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
   .card.wide{grid-column:1/-1}
   .card h2{font-size:14px;font-weight:700;margin-bottom:4px}
@@ -67,13 +88,16 @@
 
   <section class="kpis" id="kpis"></section>
 
+  <section class="holdings" id="holdings"></section>
+
   <section class="charts" id="charts"></section>
 
   <footer>
     <span class="t">口径说明：</span>
-    ①「今日净值变化」= 今日总净值 − 上一快照总净值，<b class="pos" style="color:var(--neg)">包含当日充提与币价波动</b>；<br>
+    ①「今日盈亏」= 今日总净值 − 上一快照总净值，<b class="pos" style="color:var(--neg)">包含当日充提与币价波动</b>；「总盈亏」为自首日起累计；<br>
     ②「行情盈亏」仅按各币当日涨跌幅 × 持仓市值估算，不含充提，作为市场驱动参考；<br>
-    ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计；PoolX 等锁仓产品无公开 API，通过 data/poolx_manual.json 手动补充，结束日期过后自动失效（币回到现货后由接口自动统计）。
+    ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计；PoolX 等锁仓产品无公开 API，通过 data/poolx_manual.json 手动补充，结束日期过后自动失效（币回到现货后由接口自动统计）。<br>
+    ④ 当日净出入金通过 /api/v2/spot/wallet/deposit-records 与 withdrawal-records 统计今日成功的充提，按行情价折算 USDT；无充提或接口未授权时显示为 0。
   </footer>
 </div>
 
@@ -84,6 +108,13 @@ const fmt=(n,d=2)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:d,
 const signed=n=>((n||0)>0?'+':'')+fmt(n);
 const pct=n=>signed(n)+'%';
 const colorOf=n=>n>=0?'var(--pos)':'var(--neg)';
+const fmtAmt=v=>{v=Number(v||0);
+  if(v>=100) return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(v>=1) return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+  return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:6});
+};
+const coinColor=c=>{let h=0;for(let i=0;i<c.length;i++)h=(h*31+c.charCodeAt(i))%360;return `hsl(${h},62%,58%)`};
+const COIN_FULL={BTC:'Bitcoin',ETH:'Ethereum',SOL:'Solana',USDT:'Tether',USDC:'USD Coin',BGB:'Bitget Token',USDGO:'USDGO',XRP:'Ripple',DOGE:'Dogecoin',ADA:'Cardano',AVAX:'Avalanche',LINK:'Chainlink',DOT:'Polkadot',LTC:'Litecoin',TRX:'Tron',ATOM:'Cosmos',UNI:'Uniswap',NEAR:'NEAR Protocol',APT:'Aptos',ARB:'Arbitrum',OP:'Optimism',FIL:'Filecoin',SUI:'Sui',TON:'Toncoin',PEPE:'Pepe',WIF:'dogwifcoin',FLOKI:'FLOKI',BONK:'Bonk',JUP:'Jupiter',TIA:'Celestia',INJ:'Injective',SEI:'Sei',RNDR:'Render',FET:'Fetch.ai',AAVE:'Aave',MKR:'Maker',COMP:'Compound',CRV:'Curve',SNX:'Synthetix',GRT:'The Graph','1INCH':'1inch',ENJ:'Enjin',MANA:'Decentraland',SAND:'The Sandbox',AXS:'Axie Infinity',ICP:'Internet Computer',VET:'VeChain',EOS:'EOS',XTZ:'Tezos',ALGO:'Algorand',NEO:'Neo',ONT:'Ontology',ZIL:'Zilliqa',ONE:'Harmony',ROSE:'Oasis Network',KAVA:'Kava',RUNE:'THORChain',ATOM2:'Cosmos',LUNA:'Terra',LUNC:'Terra Classic',USTC:'TerraClassicUSD',FTM:'Fantom',CELO:'Celo',YFI:'yearn.finance',BAL:'Balancer',CRV2:'Curve',CVX:'Convex Finance',FXS:'Frax Share',DYDX:'dYdX',GMX:'GMX',RDNT:'Radiant Capital',PENDLE:'Pendle',LDO:'Lido DAO',RPL:'Rocket Pool',FRAX:'Frax',DAI:'Dai',WBTC:'Wrapped BTC',WETH:'Wrapped ETH',STETH:'Lido Staked ETH',CBETH:'Coinbase Wrapped BTC',RETH:'Rocket Pool ETH',SFRXETH:'Staked Frax Ether'};
 
 async function load(){
   let hist=[];
@@ -102,15 +133,22 @@ function render(hist){
   const cum=latest.cumChangeUsdt!=null?latest.cumChangeUsdt:0;
   const spot=latest.spotUsdt||0, earn=latest.earnUsdt||0;
   const mp=latest.marketPnlUsdt!=null?latest.marketPnlUsdt:0;
+  const dep=latest.depositUsdt!=null?latest.depositUsdt:0;
+  const wit=latest.withdrawUsdt!=null?latest.withdrawUsdt:0;
+  const netFlow=latest.netFlowUsdt!=null?latest.netFlowUsdt:(dep-wit);
+  const flowNote=latest.flowNote||'';
 
   $('#update').textContent='数据截至 '+latest.date+' '+new Date(latest.ts).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
 
   const k=[
     {lab:'总资产 (USDT)', val:fmt(latest.totalUsdt), cls:'accent', delta:'币种 '+latest.coinCount+' 种 · 现货+理财'},
-    {lab:'今日净值变化', val:signed(daily), cls:colorOf(daily),
+    {lab:'今日盈亏', val:signed(daily), cls:colorOf(daily),
      delta:'较上一快照 '+pct(latest.dailyChangePct)},
-    {lab:'累计变化', val:signed(cum), cls:colorOf(cum),
+    {lab:'总盈亏', val:signed(cum), cls:colorOf(cum),
      delta:'自首日 '+pct(latest.cumChangePct)},
+    {lab:'当日净出入金', val:signed(netFlow),
+     cls:netFlow>0?'':(netFlow<0?'neg':'muted'),
+     delta:'充入 '+fmt(dep)+' / 提出 '+fmt(wit)+(flowNote?' · '+flowNote:'')},
     {lab:'现货 / 理财', val:fmt(spot), cls:'',
      delta:'理财 '+fmt(earn)+' · 行情盈亏 '+signed(mp)},
   ];
@@ -119,12 +157,47 @@ function render(hist){
     <div class="val ${x.cls}">${x.val}<small>USDT</small></div>
     <div class="delta muted">${x.delta}</div></div>`).join('');
 
+  // —— 持仓明细（按币种聚合，类似 App 总览）——
+  const coinMap={};
+  (latest.byCoin||[]).forEach(e=>{
+    if(!coinMap[e.coin]) coinMap[e.coin]={coin:e.coin,amount:0,usdt:0,kinds:new Set()};
+    coinMap[e.coin].amount+=e.amount;
+    coinMap[e.coin].usdt+=e.usdt;
+    coinMap[e.coin].kinds.add(e.kind);
+  });
+  const coins=Object.values(coinMap).sort((a,b)=>b.usdt-a.usdt);
+  const holdTotal=coins.reduce((s,c)=>s+c.usdt,0);
+  $('#holdings').innerHTML=`
+    <h2>持仓明细</h2>
+    <div class="desc">各币种数量与 USDT 市值（现货+理财合并，按市值降序）</div>
+    <table>
+      <colgroup><col style="width:36%"><col style="width:22%"><col style="width:22%"><col style="width:20%"></colgroup>
+      <thead><tr><th>币种</th><th class="num">数量</th><th class="num">价值 (USDT)</th><th class="num">占比</th></tr></thead>
+      <tbody>${coins.map(c=>{
+        const kinds=[...c.kinds];
+        const kindCls=kinds.length>1?'mix':(kinds[0]==='spot'?'spot':'earn');
+        const kindLabel=kinds.length>1?'混合':(kinds[0]==='spot'?'现货':'理财');
+        const pctV=holdTotal>0?(c.usdt/holdTotal*100):0;
+        return `<tr>
+          <td><div class="coin-cell">
+            <div class="coin-icon" style="background:${coinColor(c.coin)}">${c.coin.slice(0,3)}</div>
+            <div><div class="coin-name">${c.coin}<span class="kind-tag ${kindCls}">${kindLabel}</span></div>
+            <div class="coin-full">${COIN_FULL[c.coin]||c.coin}</div></div>
+          </div></td>
+          <td class="num amt">${fmtAmt(c.amount)}</td>
+          <td class="num val">${fmt(c.usdt)}</td>
+          <td class="num"><div class="pct-text">${pctV.toFixed(1)}%</div><div class="pct-bar"><div class="pct-fill" style="width:${pctV}%;background:${coinColor(c.coin)}"></div></div></td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td>合计</td><td class="num">—</td><td class="num">${fmt(holdTotal)}</td><td class="num pct-text">100%</td></tr></tfoot>
+    </table>`;
+
   // —— 图表 ——
   const dates=hist.map(h=>h.date);
   $('#charts').innerHTML=`
     <div class="card wide"><h2>总资产趋势</h2><div class="desc">全账户净值（现货+理财）随时间变化</div><div class="chart" id="c_total"></div></div>
     <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
-    <div class="card"><h2>每日净值变化</h2><div class="desc">相邻快照的净值增量</div><div class="chart" id="c_daily"></div></div>
+    <div class="card"><h2>每日盈亏</h2><div class="desc">相邻快照的净值增量（含充提与行情）</div><div class="chart" id="c_daily"></div></div>
     <div class="card wide"><h2>币种分布</h2><div class="desc">最新快照中各币 USDT 市值（现货+理财合并，取前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
 
   const axisColor='#5a6680', textColor='#8b96ad';
@@ -198,6 +271,7 @@ function renderEmpty(){
     <div class="empty"><b>暂无数据</b>
     <p>这是项目部署后的初始状态。将本目录推送到 GitHub、配置好仓库 Secrets（<code>BITGET_API_KEY</code> / <code>BITGET_API_SECRET</code> / <code>BITGET_API_PASSPHRASE</code>）并在 Actions 中启用工作流后，每日 08:10（北京时间）会自动抓取现货与理财持仓并写入 <code>data/history.json</code>，刷新本页即可看到统计。</p></div>`;
   $('#charts').innerHTML='';
+  $('#holdings').innerHTML='';
 }
 
 load();

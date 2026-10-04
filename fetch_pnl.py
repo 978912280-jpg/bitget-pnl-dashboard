@@ -194,7 +194,9 @@ def fetch_prices() -> dict:
 
 
 # ---------------------------------------------------------------- 汇总与盈亏 ----------
-def build_snapshot(spot: dict, earn: dict, prices: dict) -> dict:
+def build_snapshot(spot: dict, earn: dict, prices: dict,
+                   deposit_usdt: float = 0.0, withdraw_usdt: float = 0.0,
+                   flow_note: str = "") -> dict:
     by_coin = []
     total_usdt = 0.0
     spot_usdt = 0.0
@@ -228,6 +230,10 @@ def build_snapshot(spot: dict, earn: dict, prices: dict) -> dict:
         "spotUsdt": round(spot_usdt, 6),
         "earnUsdt": round(earn_usdt, 6),
         "marketPnlUsdt": round(market_pnl, 6),      # 仅按行情 24h 变动估算，不含充提
+        "depositUsdt": round(deposit_usdt, 6),       # 今日充入（USDT 等值）
+        "withdrawUsdt": round(withdraw_usdt, 6),      # 今日提出（USDT 等值）
+        "netFlowUsdt": round(deposit_usdt - withdraw_usdt, 6),  # 今日净出入金
+        "flowNote": flow_note,                          # 接口不可用时的说明
         "coinCount": len({e["coin"] for e in by_coin}),
         "byCoin": sorted(by_coin, key=lambda x: -x["usdt"]),
         "missing": missing,
@@ -274,6 +280,53 @@ def load_manual_poolx() -> dict:
     return out
 
 
+def fetch_wallet_records(api_key, secret, passphrase, path: str):
+    """
+    读取今日(北京时间)充币/提币记录。
+    path 如 /api/v2/spot/wallet/deposit-records 或 /withdrawal-records。
+    返回 list（记录列表）；None 表示接口不可用/未授权（需与"今日无记录=[]"区分）。
+    """
+    now = datetime.now(BEIJING)
+    start_ms = int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    qs = f"?startTime={start_ms}&endTime={end_ms}&pageSize=100"
+    try:
+        data = api_get(api_key, secret, passphrase, path + qs)
+    except Exception as exc:
+        print(f"[warn] 读取 {path} 失败：{exc}")
+        return None
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        for key in ("list", "resultList", "records", "data", "items"):
+            if isinstance(data.get(key), list):
+                return data[key]
+    return []
+
+
+def sum_flow_usdt(records: list, prices: dict) -> float:
+    """把充提记录按币种换算成 USDT 求和，只统计成功/已完成的记录。"""
+    if not records:
+        return 0.0
+    total = 0.0
+    skip_status = {"pending", "processing", "failed", "canceled", "cancelled",
+                    "reviewing", "wait_review", "init", "waiting"}
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        status = str(rec.get("status") or rec.get("state") or "").lower()
+        if status in skip_status:
+            continue
+        coin = str(rec.get("coin") or rec.get("coinName") or rec.get("coinSymbol") or "").upper()
+        amount = _num(rec.get("amount") or rec.get("quantity") or rec.get("amountStr"))
+        if not coin or amount <= 0:
+            continue
+        price_info = prices.get(coin)
+        price = price_info["price"] if price_info and price_info["price"] > 0 else 1.0
+        total += amount * price
+    return total
+
+
 def save_history(history: list):
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     DATA_FILE.write_text(json.dumps(history, ensure_ascii=False, indent=2), "utf-8")
@@ -297,10 +350,10 @@ def main():
     secret = __import__("os").environ["BITGET_API_SECRET"]
     passphrase = __import__("os").environ["BITGET_API_PASSPHRASE"]
 
-    print("[1/4] 读取现货账户资产…")
+    print("[1/5] 读取现货账户资产…")
     spot = fetch_spot(api_key, secret, passphrase)
     print(f"      现货币种数：{len(spot)}")
-    print("[2/4] 读取理财(Earn)持仓…")
+    print("[2/5] 读取理财(Earn)持仓…")
     earn = fetch_earn(api_key, secret, passphrase)
     print(f"      理财币种数：{len(earn)}")
     # 手动补充 PoolX 等无 API 的锁仓持仓（带结束日期，自动失效）
@@ -310,10 +363,22 @@ def main():
         for coin, amt in manual.items():
             earn[coin] = earn.get(coin, 0.0) + amt
         print(f"      补充后理财币种数：{len(earn)}")
-    print("[3/4] 拉取行情价…")
+    print("[3/5] 拉取行情价…")
     prices = fetch_prices()
     print(f"      行情币种数：{len(prices)}")
-    snap = build_snapshot(spot, earn, prices)
+    print("[4/5] 读取今日充提记录…")
+    dep = fetch_wallet_records(api_key, secret, passphrase, "/api/v2/spot/wallet/deposit-records")
+    wit = fetch_wallet_records(api_key, secret, passphrase, "/api/v2/spot/wallet/withdrawal-records")
+    flow_note = ""
+    if dep is None or wit is None:
+        flow_note = "充提记录接口未授权或不可用，出入金暂显示为 0"
+        dep_usdt = wit_usdt = 0.0
+    else:
+        dep_usdt = sum_flow_usdt(dep, prices)
+        wit_usdt = sum_flow_usdt(wit, prices)
+    print(f"      今日充入 {dep_usdt:.2f} / 提出 {wit_usdt:.2f} USDT"
+          + (f"（{flow_note}）" if flow_note else ""))
+    snap = build_snapshot(spot, earn, prices, dep_usdt, wit_usdt, flow_note)
     if snap["missing"]:
         print(f"[warn] 以下币种无 USDT 行情，未计入总值：{', '.join(snap['missing'])}")
 
