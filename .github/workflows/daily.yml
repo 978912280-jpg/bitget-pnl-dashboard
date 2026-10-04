@@ -1,0 +1,59 @@
+name: 每日资产统计与 Pages 部署
+
+# 每天 UTC 00:10（北京时间 08:10）自动抓取一次；也支持手动触发（Actions 页面点 Run workflow）。
+on:
+  schedule:
+    - cron: "10 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 提交 data/history.json
+  pages: write      # 部署 GitHub Pages
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  fetch-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 密钥全部来自仓库 Secrets，不进入代码仓库
+      - name: 抓取资产与盈亏
+        env:
+          BITGET_API_KEY: ${{ secrets.BITGET_API_KEY }}
+          BITGET_API_SECRET: ${{ secrets.BITGET_API_SECRET }}
+          BITGET_API_PASSPHRASE: ${{ secrets.BITGET_API_PASSPHRASE }}
+        run: python fetch_pnl.py
+
+      - name: 提交历史数据
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history.json
+          git commit -m "chore: 更新 $(date +%F) 资产快照" || echo "无数据变更，跳过提交"
+          git push
+
+      - name: 组装站点文件
+        run: |
+          mkdir -p _site/data
+          cp index.html _site/
+          cp data/history.json _site/data/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

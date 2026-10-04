@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitget 资产与每日盈亏仪表盘</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230b1020'/%3E%3Cpath d='M5 17l4-5 3 2 5-7' fill='none' stroke='%23f0b429' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='7' r='2' fill='%2334d399'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#131a2e; --panel2:#1a2339; --line:#243049;
+    --text:#e8edf6; --muted:#8b96ad; --faint:#5a6680;
+    --accent:#f0b429; --spot:#4f8cff; --earn:#f0b429;
+    --pos:#34d399; --neg:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);
+    font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 40px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:22px}
+  h1{font-size:22px;font-weight:800;letter-spacing:.3px}
+  h1 .dot{color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;margin-top:6px}
+  .update{color:var(--faint);font-size:12px;white-space:nowrap}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .kpi .lab{color:var(--muted);font-size:12px;margin-bottom:8px}
+  .kpi .val{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+  .kpi .val small{font-size:13px;font-weight:600;color:var(--faint);margin-left:3px}
+  .kpi .delta{font-size:12px;margin-top:7px;font-variant-numeric:tabular-nums}
+  .pos{color:var(--pos)} .neg{color:var(--neg)} .muted{color:var(--muted)} .accent{color:var(--accent)}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card.wide{grid-column:1/-1}
+  .card h2{font-size:14px;font-weight:700;margin-bottom:4px}
+  .card .desc{color:var(--faint);font-size:12px;margin-bottom:12px}
+  .chart{width:100%;height:300px}
+  /* 空状态 */
+  .empty{grid-column:1/-1;background:var(--panel);border:1px dashed var(--line);border-radius:12px;
+    padding:36px 28px;text-align:center}
+  .empty b{display:block;font-size:16px;margin-bottom:10px}
+  .empty p{color:var(--muted);font-size:13px;line-height:1.9;max-width:560px;margin:0 auto}
+  .empty code{color:var(--accent);background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:12px}
+  footer{margin-top:24px;color:var(--faint);font-size:12px;line-height:1.9}
+  footer .t{color:var(--muted)}
+  @media(max-width:760px){
+    .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
+    .charts{grid-template-columns:1fr}
+    .card.wide{grid-column:auto}
+    .chart{height:250px}
+    .kpi .val{font-size:20px}
+    h1{font-size:18px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="dot">●</span> Bitget 资产与每日盈亏</h1>
+      <div class="sub">现货 + 理财(Earn) 统一统计 · 数据源 data/history.json</div>
+    </div>
+    <div class="update" id="update"></div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="charts" id="charts"></section>
+
+  <footer>
+    <span class="t">口径说明：</span>
+    ①「今日净值变化」= 今日总净值 − 上一快照总净值，<b class="pos" style="color:var(--neg)">包含当日充提与币价波动</b>；<br>
+    ②「行情盈亏」仅按各币当日涨跌幅 × 持仓市值估算，不含充提，作为市场驱动参考；<br>
+    ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计，正是现货 PNL 的盲区所在。
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const fmt=(n,d=2)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const signed=n=>((n||0)>0?'+':'')+fmt(n);
+const pct=n=>signed(n)+'%';
+const colorOf=n=>n>=0?'var(--pos)':'var(--neg)';
+
+async function load(){
+  let hist=[];
+  try{
+    const r=await fetch('data/history.json');
+    hist=await r.json();
+  }catch(e){ /* fetch 失败（如本地 file:// 打开）按空数据处理 */ }
+  if(!Array.isArray(hist))hist=[];
+  render(hist);
+}
+
+function render(hist){
+  if(!hist.length){ renderEmpty(); return; }
+  const latest=hist[hist.length-1];
+  const daily=latest.dailyChangeUsdt!=null?latest.dailyChangeUsdt:0;
+  const cum=latest.cumChangeUsdt!=null?latest.cumChangeUsdt:0;
+  const spot=latest.spotUsdt||0, earn=latest.earnUsdt||0;
+  const mp=latest.marketPnlUsdt!=null?latest.marketPnlUsdt:0;
+
+  $('#update').textContent='数据截至 '+latest.date+' '+new Date(latest.ts).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
+
+  const k=[
+    {lab:'总资产 (USDT)', val:fmt(latest.totalUsdt), cls:'accent', delta:'币种 '+latest.coinCount+' 种 · 现货+理财'},
+    {lab:'今日净值变化', val:signed(daily), cls:colorOf(daily),
+     delta:'较上一快照 '+pct(latest.dailyChangePct)},
+    {lab:'累计变化', val:signed(cum), cls:colorOf(cum),
+     delta:'自首日 '+pct(latest.cumChangePct)},
+    {lab:'现货 / 理财', val:fmt(spot), cls:'',
+     delta:'理财 '+fmt(earn)+' · 行情盈亏 '+signed(mp)},
+  ];
+  $('#kpis').innerHTML=k.map(x=>`
+    <div class="kpi"><div class="lab">${x.lab}</div>
+    <div class="val ${x.cls}">${x.val}<small>USDT</small></div>
+    <div class="delta muted">${x.delta}</div></div>`).join('');
+
+  // —— 图表 ——
+  const dates=hist.map(h=>h.date);
+  $('#charts').innerHTML=`
+    <div class="card wide"><h2>总资产趋势</h2><div class="desc">全账户净值（现货+理财）随时间变化</div><div class="chart" id="c_total"></div></div>
+    <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
+    <div class="card"><h2>每日净值变化</h2><div class="desc">相邻快照的净值增量</div><div class="chart" id="c_daily"></div></div>
+    <div class="card wide"><h2>币种分布</h2><div class="desc">最新快照中各币 USDT 市值（现货+理财合并，取前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
+
+  const axisColor='#5a6680', textColor='#8b96ad';
+  const baseAxis={axisLine:{lineStyle:{color:'#243049'}},axisLabel:{color:textColor,fontFamily:'Noto Sans SC'},splitLine:{lineStyle:{color:'#1c2440'}}};
+  const tip={trigger:'axis',confine:true,
+    backgroundColor:'#1a2339',borderColor:'#243049',textStyle:{color:'#e8edf6'}};
+
+  // 总资产趋势
+  echarts.init($('#c_total')).setOption({
+    grid:{left:60,right:24,top:20,bottom:34},
+    tooltip:{...tip,valueFormatter:v=>fmt(v)+' USDT'},
+    xAxis:{type:'category',data:dates,...baseAxis,axisLabel:{color:textColor}},
+    yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+    series:[{type:'line',data:hist.map(h=>h.totalUsdt),smooth:.3,symbol:'circle',symbolSize:7,
+      lineStyle:{color:'#f0b429',width:2.5},itemStyle:{color:'#f0b429'},areaStyle:{color:'rgba(240,180,41,0.10)'}}]
+  });
+
+  // 现货/理财 堆叠面积
+  echarts.init($('#c_split')).setOption({
+    grid:{left:60,right:24,top:20,bottom:34},
+    tooltip:{...tip,trigger:'axis',valueFormatter:v=>fmt(v)+' USDT'},
+    legend:{data:['现货','理财'],textStyle:{color:textColor},top:0},
+    xAxis:{type:'category',data:dates,...baseAxis},
+    yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+    series:[
+      {name:'现货',type:'line',stack:'v',data:hist.map(h=>h.spotUsdt||0),smooth:.3,
+       lineStyle:{color:'#4f8cff',width:2},itemStyle:{color:'#4f8cff'},areaStyle:{color:'rgba(79,140,255,0.18)'}},
+      {name:'理财',type:'line',stack:'v',data:hist.map(h=>h.earnUsdt||0),smooth:.3,
+       lineStyle:{color:'#f0b429',width:2},itemStyle:{color:'#f0b429'},areaStyle:{color:'rgba(240,180,41,0.16)'}}
+    ]
+  });
+
+  // 每日净值变化（柱状，0 基线）
+  const dailyArr=hist.map(h=>h.dailyChangeUsdt!=null?h.dailyChangeUsdt:0);
+  echarts.init($('#c_daily')).setOption({
+    grid:{left:60,right:24,top:20,bottom:34},
+    tooltip:{...tip,valueFormatter:v=>signed(v)+' USDT'},
+    xAxis:{type:'category',data:dates,...baseAxis},
+    yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+    series:[{type:'bar',data:dailyArr,barWidth:'48%',
+      itemStyle:{color:p=>p.value>=0?'#34d399':'#f87171',borderRadius:[4,4,0,0]}}]
+  });
+
+  // 币种分布（横向条形）
+  const agg={};
+  (latest.byCoin||[]).forEach(e=>{agg[e.coin]=(agg[e.coin]||0)+e.usdt;});
+  const sorted=Object.entries(agg).sort((a,b)=>b[1]-a[1]);
+  const top=sorted.slice(0,8);
+  const otherVal=sorted.slice(8).reduce((s,x)=>s+x[1],0);
+  if(otherVal>0)top.push(['其他',otherVal]);
+  const names=top.map(x=>x[0]), vals=top.map(x=>x[1]);
+  echarts.init($('#c_coin')).setOption({
+    grid:{left:70,right:40,top:16,bottom:30},
+    tooltip:{...tip,axisPointer:{type:'shadow'},valueFormatter:v=>fmt(v)+' USDT'},
+    xAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+    yAxis:{type:'category',data:names.reverse(),...baseAxis,axisLabel:{color:textColor}},
+    series:[{type:'bar',data:vals.reverse(),barWidth:'55%',label:{show:true,position:'right',
+      color:'#e8edf6',formatter:p=>fmt(p.value,0),fontSize:11},
+      itemStyle:{color:'#4f8cff',borderRadius:[0,4,4,0]}}]
+  });
+
+  // 自适应
+  const charts=Array.from(document.querySelectorAll('.chart'));
+  const rz=()=>charts.forEach(c=>{const i=echarts.getInstanceByDom(c);i&&i.resize();});
+  window.addEventListener('resize',rz);
+}
+
+function renderEmpty(){
+  $('#update').textContent='尚无数据';
+  $('#kpis').innerHTML=`
+    <div class="empty"><b>暂无数据</b>
+    <p>这是项目部署后的初始状态。将本目录推送到 GitHub、配置好仓库 Secrets（<code>BITGET_API_KEY</code> / <code>BITGET_API_SECRET</code> / <code>BITGET_API_PASSPHRASE</code>）并在 Actions 中启用工作流后，每日 08:10（北京时间）会自动抓取现货与理财持仓并写入 <code>data/history.json</code>，刷新本页即可看到统计。</p></div>`;
+  $('#charts').innerHTML='';
+}
+
+load();
+</script>
+</body>
+</html>
