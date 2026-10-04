@@ -1,13 +1,35 @@
 name: 每日资产统计与 Pages 部署
 
 # 每天 UTC 00:10（北京时间 08:10）自动抓取一次；也支持手动触发（Actions 页面点 Run workflow）。
+# 手动触发时可选择性填写 PoolX 字段，实现表单式更新 PoolX 持仓（无需改 JSON）。
 on:
   schedule:
     - cron: "10 0 * * *"
   workflow_dispatch:
+    inputs:
+      poolx_coin:
+        description: "PoolX 币种代码（如 BTC、SOL），留空则不更新 PoolX"
+        required: false
+        type: string
+      poolx_amount:
+        description: "PoolX 锁仓数量（如 0.0717），新增/覆盖时必填"
+        required: false
+        type: string
+      poolx_ends:
+        description: "结束日期 YYYY-MM-DD（到期后自动失效，币回现货由接口统计）"
+        required: false
+        type: string
+      poolx_action:
+        description: "操作类型：update=新增或覆盖该币种，remove=删除该币种"
+        required: false
+        type: choice
+        options:
+          - update
+          - remove
+        default: update
 
 permissions:
-  contents: write   # 提交 data/history.json
+  contents: write   # 提交 data/history.json 和 data/poolx_manual.json
   pages: write      # 部署 GitHub Pages
   id-token: write
 
@@ -20,13 +42,59 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.output.page_url }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # 可选：表单式更新 PoolX 手动持仓（仅在填写了 poolx_coin 时执行）
+      - name: 更新 PoolX 手动持仓（可选）
+        if: ${{ inputs.poolx_coin != '' }}
+        env:
+          POOLX_COIN: ${{ inputs.poolx_coin }}
+          POOLX_AMOUNT: ${{ inputs.poolx_amount }}
+          POOLX_ENDS: ${{ inputs.poolx_ends }}
+          POOLX_ACTION: ${{ inputs.poolx_action }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          coin = os.environ.get("POOLX_COIN", "").strip().upper()
+          amount = os.environ.get("POOLX_AMOUNT", "").strip()
+          ends = os.environ.get("POOLX_ENDS", "").strip()
+          action = os.environ.get("POOLX_ACTION", "update").strip()
+
+          if not coin:
+              print("未提供币种，跳过")
+              raise SystemExit(0)
+
+          path = Path("data/poolx_manual.json")
+          data = json.loads(path.read_text()) if path.exists() else {}
+
+          if action == "remove":
+              if coin in data:
+                  del data[coin]
+                  print(f"已删除 {coin}")
+              else:
+                  print(f"{coin} 不存在，无需删除")
+          else:
+              if not amount:
+                  print(f"错误：update 操作必须提供数量")
+                  raise SystemExit(1)
+              entry = {"amount": float(amount)}
+              if ends:
+                  entry["ends"] = ends
+              data[coin] = entry
+              print(f"已更新 {coin}: {entry}")
+
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+          print("data/poolx_manual.json 已写入")
+          PY
 
       # 密钥全部来自仓库 Secrets，不进入代码仓库
       - name: 抓取资产与盈亏
@@ -37,12 +105,12 @@ jobs:
           BARK_KEY: ${{ secrets.BARK_KEY }}
         run: python fetch_pnl.py
 
-      - name: 提交历史数据
+      - name: 提交历史数据与 PoolX 配置
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/history.json
-          git commit -m "chore: 更新 $(date +%F) 资产快照" || echo "无数据变更，跳过提交"
+          git add data/history.json data/poolx_manual.json
+          git commit -m "chore: 更新 $(date +%F) 资产快照与 PoolX 配置" || echo "无数据变更，跳过提交"
           git push
 
       - name: 组装站点文件
