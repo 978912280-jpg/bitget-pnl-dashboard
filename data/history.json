@@ -1,16 +1,16 @@
 [
   {
     "date": "2026-10-04",
-    "ts": 1791117698693,
-    "totalUsdt": 18530.898513,
-    "spotUsdt": 18.7593,
-    "earnUsdt": 18512.139212,
-    "marketPnlUsdt": 1.195613,
+    "ts": 1791117745923,
+    "totalUsdt": 18395.943397,
+    "spotUsdt": 18.754525,
+    "earnUsdt": 18377.188872,
+    "marketPnlUsdt": 1.193306,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
     "flowNote": "",
-    "coinCount": 7,
+    "coinCount": 5,
     "byCoin": [
       {
         "coin": "USDGO",
@@ -22,15 +22,15 @@
       {
         "coin": "BTC",
         "amount": 0.0717,
-        "price": 85248.75,
-        "usdt": 6112.335375,
+        "price": 85244.27,
+        "usdt": 6112.014159,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.6876,
-        "price": 121.51,
-        "usdt": 5308.480276,
+        "price": 121.52,
+        "usdt": 5308.917152,
         "kind": "earn"
       },
       {
@@ -41,24 +41,17 @@
         "kind": "earn"
       },
       {
-        "coin": "ETH",
-        "amount": 0.05,
-        "price": 2701.29,
-        "usdt": 135.0645,
-        "kind": "earn"
-      },
-      {
         "coin": "BGB",
         "amount": 5.672396728360639,
-        "price": 1.9989,
-        "usdt": 11.338554,
+        "price": 1.9981,
+        "usdt": 11.334016,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 5.3e-05,
-        "price": 85248.75,
-        "usdt": 4.518184,
+        "price": 85244.27,
+        "usdt": 4.517946,
         "kind": "spot"
       },
       {
@@ -74,13 +67,6 @@
         "price": 1.0,
         "usdt": 0.195517,
         "kind": "spot"
-      },
-      {
-        "coin": "XRP",
-        "amount": 0.001,
-        "price": 1.5002,
-        "usdt": 0.0015,
-        "kind": "earn"
       }
     ],
     "missing": [],
