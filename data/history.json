@@ -79,11 +79,11 @@
   },
   {
     "date": "2026-10-05",
-    "ts": 1791133730834,
-    "totalUsdt": 18412.000346,
-    "spotUsdt": 21.103391,
-    "earnUsdt": 18390.896955,
-    "marketPnlUsdt": 1.336795,
+    "ts": 1791134019830,
+    "totalUsdt": 18410.605411,
+    "spotUsdt": 21.082722,
+    "earnUsdt": 18389.522689,
+    "marketPnlUsdt": 1.327224,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -100,15 +100,15 @@
       {
         "coin": "BTC",
         "amount": 0.0717,
-        "price": 85344.06,
-        "usdt": 6119.169102,
+        "price": 85318.8,
+        "usdt": 6117.35796,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.6876,
-        "price": 121.67,
-        "usdt": 5315.470292,
+        "price": 121.68,
+        "usdt": 5315.907168,
         "kind": "earn"
       },
       {
@@ -121,15 +121,15 @@
       {
         "coin": "BGB",
         "amount": 5.90081750836064,
-        "price": 2.0011,
-        "usdt": 11.808126,
+        "price": 1.9978,
+        "usdt": 11.788653,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 5.3e-05,
-        "price": 85344.06,
-        "usdt": 4.523235,
+        "price": 85318.8,
+        "usdt": 4.521896,
         "kind": "spot"
       },
       {
@@ -149,8 +149,8 @@
       {
         "coin": "CT",
         "amount": 0.2848958,
-        "price": 0.49677,
-        "usdt": 0.141528,
+        "price": 0.49727,
+        "usdt": 0.14167,
         "kind": "spot"
       }
     ],
@@ -164,9 +164,9 @@
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": 7.62019,
-    "dailyChangePct": 0.041404,
-    "cumChangeUsdt": 7.62019,
-    "cumChangePct": 0.041404
+    "dailyChangeUsdt": 6.225255,
+    "dailyChangePct": 0.033825,
+    "cumChangeUsdt": 6.225255,
+    "cumChangePct": 0.033825
   }
 ]
