@@ -26,6 +26,7 @@ import hmac
 import json
 import sys
 import time
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -292,15 +293,50 @@ def fetch_wallet_records(api_key, secret, passphrase, path: str):
     读取今日(北京时间)充币/提币记录。
     path 如 /api/v2/spot/wallet/deposit-records 或 /withdrawal-records。
     返回 list（记录列表）；None 表示接口不可用/未授权（需与"今日无记录=[]"区分）。
+    使用禁用重定向的 opener（与探测脚本一致），避免个别端点异常重定向导致 DNS 失败。
     """
     now = datetime.now(BEIJING)
     start_ms = int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    qs = f"?startTime={start_ms}&endTime={end_ms}&pageSize=100"
-    try:
-        data = api_get(api_key, secret, passphrase, path + qs)
-    except Exception as exc:
-        print(f"[warn] 读取 {path} 失败：{exc}")
+    full_path = path + f"?startTime={start_ms}&endTime={end_ms}&pageSize=100"
+
+    class _NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None  # 不跟随重定向
+
+    opener = urllib.request.build_opener(_NoRedirect)
+    last_exc = None
+    for attempt in range(5):
+        timestamp = str(int(time.time() * 1000))
+        req = Request(BASE + full_path, method="GET")
+        req.add_header("ACCESS-KEY", api_key)
+        req.add_header("ACCESS-SIGN", sign(secret, timestamp, "GET", full_path, ""))
+        req.add_header("ACCESS-TIMESTAMP", timestamp)
+        req.add_header("ACCESS-PASSPHRASE", passphrase)
+        req.add_header("Content-Type", "application/json")
+        try:
+            with opener.open(req, timeout=30) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            if payload.get("code") != OK_CODE:
+                print(f"[warn] {path} 返回 code={payload.get('code')} msg={payload.get('msg')}")
+                return None
+            data = payload.get("data")
+            break
+        except HTTPError as e:
+            detail = e.read().decode("utf-8", "ignore")
+            print(f"[warn] {path} HTTP {e.code}: {detail[:200]}")
+            return None
+        except URLError as e:
+            last_exc = e
+            if attempt < 4:
+                time.sleep(2 * (attempt + 1))
+                continue
+            print(f"[warn] 读取 {path} 失败（5次重试后）：{e.reason}")
+            return None
+        except Exception as e:
+            print(f"[warn] 读取 {path} 异常：{e}")
+            return None
+    else:
         return None
     if isinstance(data, list):
         return data
