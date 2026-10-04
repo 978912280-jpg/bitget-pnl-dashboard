@@ -23,11 +23,12 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 PATHS = [
-    "/api/v2/spot/wallet/deposit-records?pageSize=5",
-    "/api/v2/wallet/deposit-records?pageSize=5",
-    "/api/v2/spot/wallet/withdrawal-records?pageSize=5",
-    "/api/v2/wallet/withdrawal-records?pageSize=5",
-    "/api/v2/spot/wallet/deposit-address?coin=USDT",
+    "/api/v2/spot/wallet/deposit-records?pageNo=1&pageSize=5",
+    "/api/v2/spot/wallet/deposit-records?coin=USDT&pageNo=1&pageSize=5",
+    "/api/v2/spot/wallet/deposit-records?startTime=1791100000000&endTime=1791120000000&pageNo=1&pageSize=5",
+    "/api/v2/spot/wallet/deposit-records?startTime=1791100000&endTime=1791120000&pageNo=1&pageSize=5",
+    "/api/v2/spot/wallet/deposit-records?startTime=1791100000000&endTime=1791120000000&pageSize=5",
+    "/api/v2/spot/wallet/withdrawal-records?startTime=1791100000000&endTime=1791120000000&pageSize=5",
 ]
 
 opener = urllib.request.build_opener(NoRedirect)
