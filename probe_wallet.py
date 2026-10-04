@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """临时探测：充提记录端点的原始响应（禁用重定向），定位 DNS 错误原因。"""
 import os, sys, time, json, urllib.request
+from urllib.request import Request
 from urllib.error import HTTPError, URLError
 
 sys.path.insert(0, ".")
