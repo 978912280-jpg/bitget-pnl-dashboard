@@ -48,9 +48,9 @@ def sign(secret: str, timestamp: str, method: str, request_path: str, body: str)
 
 
 def api_get(path: str, api_key: str, secret: str, passphrase: str) -> list | dict:
-    """带鉴权的 GET 请求，返回响应中的 data 字段。失败时抛出带响应体的异常。网络错误自动重试 3 次。"""
+    """带鉴权的 GET 请求，返回响应中的 data 字段。网络错误自动重试 5 次（指数退避）。"""
     last_exc = None
-    for attempt in range(3):
+    for attempt in range(5):
         timestamp = str(int(time.time() * 1000))
         req = Request(BASE + path, method="GET")
         req.add_header("ACCESS-KEY", api_key)
@@ -69,7 +69,7 @@ def api_get(path: str, api_key: str, secret: str, passphrase: str) -> list | dic
             raise RuntimeError(f"HTTP {e.code} {path}: {detail}")
         except URLError as e:
             last_exc = e
-            if attempt < 2:
+            if attempt < 4:
                 time.sleep(2 * (attempt + 1))
                 continue
             raise RuntimeError(f"网络错误 {path}: {e.reason}")
@@ -370,21 +370,23 @@ def main():
         for coin, amt in manual.items():
             earn[coin] = earn.get(coin, 0.0) + amt
         print(f"      补充后理财币种数：{len(earn)}")
-    print("[3/5] 拉取行情价…")
+    print("[3/5] 读取今日充提记录…")
+    dep_records = fetch_wallet_records(api_key, secret, passphrase, "/api/v2/spot/wallet/deposit-records")
+    wit_records = fetch_wallet_records(api_key, secret, passphrase, "/api/v2/spot/wallet/withdrawal-records")
+    print("[4/5] 拉取行情价…")
     prices = fetch_prices()
     print(f"      行情币种数：{len(prices)}")
-    print("[4/5] 读取今日充提记录…")
-    dep = fetch_wallet_records(api_key, secret, passphrase, "/api/v2/spot/wallet/deposit-records")
-    wit = fetch_wallet_records(api_key, secret, passphrase, "/api/v2/spot/wallet/withdrawal-records")
+    # 充提记录换算为 USDT（需行情价，故在拉取行情后换算）
     flow_note = ""
-    if dep is None or wit is None:
+    if dep_records is None or wit_records is None:
         flow_note = "充提记录接口未授权或不可用，出入金暂显示为 0"
         dep_usdt = wit_usdt = 0.0
     else:
-        dep_usdt = sum_flow_usdt(dep, prices)
-        wit_usdt = sum_flow_usdt(wit, prices)
+        dep_usdt = sum_flow_usdt(dep_records, prices)
+        wit_usdt = sum_flow_usdt(wit_records, prices)
     print(f"      今日充入 {dep_usdt:.2f} / 提出 {wit_usdt:.2f} USDT"
           + (f"（{flow_note}）" if flow_note else ""))
+    print("[5/5] 汇总快照…")
     snap = build_snapshot(spot, earn, prices, dep_usdt, wit_usdt, flow_note)
     if snap["missing"]:
         print(f"[warn] 以下币种无 USDT 行情，未计入总值：{', '.join(snap['missing'])}")
