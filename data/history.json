@@ -1,15 +1,15 @@
 [
   {
     "date": "2026-10-04",
-    "ts": 1791115908177,
-    "totalUsdt": 18410.649851,
-    "spotUsdt": 18.666864,
-    "earnUsdt": 18391.982987,
-    "marketPnlUsdt": 1.347674,
+    "ts": 1791116075624,
+    "totalUsdt": 18393.389643,
+    "spotUsdt": 18.658057,
+    "earnUsdt": 18374.731586,
+    "marketPnlUsdt": 1.171188,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
-    "flowNote": "充提记录接口未授权或不可用，出入金暂显示为 0",
+    "flowNote": "",
     "coinCount": 5,
     "byCoin": [
       {
@@ -22,15 +22,15 @@
       {
         "coin": "BTC",
         "amount": 0.0717,
-        "price": 85365.3,
-        "usdt": 6120.69201,
+        "price": 85252.65,
+        "usdt": 6112.615005,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.6876,
-        "price": 121.66,
-        "usdt": 5315.033416,
+        "price": 121.45,
+        "usdt": 5305.85902,
         "kind": "earn"
       },
       {
@@ -43,15 +43,15 @@
       {
         "coin": "BGB",
         "amount": 5.672396728360639,
-        "price": 1.998,
-        "usdt": 11.333449,
+        "price": 1.9975,
+        "usdt": 11.330612,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 5.3e-05,
-        "price": 85365.3,
-        "usdt": 4.524361,
+        "price": 85252.65,
+        "usdt": 4.51839,
         "kind": "spot"
       },
       {
