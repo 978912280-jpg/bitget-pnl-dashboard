@@ -34,6 +34,7 @@ jobs:
           BITGET_API_KEY: ${{ secrets.BITGET_API_KEY }}
           BITGET_API_SECRET: ${{ secrets.BITGET_API_SECRET }}
           BITGET_API_PASSPHRASE: ${{ secrets.BITGET_API_PASSPHRASE }}
+          BARK_KEY: ${{ secrets.BARK_KEY }}
         run: python fetch_pnl.py
 
       - name: 提交历史数据

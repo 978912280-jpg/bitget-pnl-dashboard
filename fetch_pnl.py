@@ -24,6 +24,7 @@ import base64
 import hashlib
 import hmac
 import json
+import os
 import sys
 import time
 import urllib.request
@@ -375,6 +376,54 @@ def save_history(history: list):
     DATA_FILE.write_text(json.dumps(history, ensure_ascii=False, indent=2), "utf-8")
 
 
+def send_bark(snap: dict):
+    """
+    通过 Bark 推送当日 5 个 KPI 到手机。
+    需环境变量 BARK_KEY（纯 device key 或完整 https://api.day.app/xxx/ URL 均可）。
+    未配置则跳过；推送失败仅告警，不中断流水线。
+    """
+    bark_key = os.environ.get("BARK_KEY", "").strip().rstrip("/")
+    if not bark_key:
+        return
+    url = bark_key if bark_key.startswith("http") else f"https://api.day.app/{bark_key}"
+
+    daily = snap.get("dailyChangeUsdt", 0) or 0
+    cum = snap.get("cumChangeUsdt", 0) or 0
+    net_flow = snap.get("netFlowUsdt", 0) or 0
+    dep = snap.get("depositUsdt", 0) or 0
+    wit = snap.get("withdrawUsdt", 0) or 0
+    spot = snap.get("spotUsdt", 0) or 0
+    earn = snap.get("earnUsdt", 0) or 0
+
+    title = f"Bitget 资产日报 · {snap['date']}"
+    body = (
+        f"总资产: {snap['totalUsdt']:,.2f} USDT\n"
+        f"今日盈亏: {daily:+.2f} USDT\n"
+        f"总盈亏: {cum:+.2f} USDT\n"
+        f"净出入金: {net_flow:+.2f}（充入 {dep:.2f} / 提出 {wit:.2f}）\n"
+        f"现货: {spot:,.2f} / 理财: {earn:,.2f}"
+    )
+    payload = {
+        "title": title,
+        "body": body,
+        "group": "Bitget资产",
+        "level": "active",
+        "sound": "minuet",
+        "url": "https://978912280-jpg.github.io/bitget-pnl-dashboard/",
+    }
+    try:
+        req = Request(url, data=json.dumps(payload).encode("utf-8"), method="POST")
+        req.add_header("Content-Type", "application/json")
+        with urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+        if result.get("code") == 200:
+            print("[bark] 推送成功 ✅")
+        else:
+            print(f"[warn] Bark 返回异常：{result}")
+    except Exception as e:
+        print(f"[warn] Bark 推送失败：{e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bitget 资产与每日盈亏抓取")
     parser.add_argument("--mock", action="store_true", help="使用本地样例数据验证解析与盈亏逻辑（不联网不落盘）")
@@ -450,13 +499,14 @@ def main():
         history[-1].update(snap)
 
     save_history(history)
-    print("[4/4] 已写入 data/history.json")
+    print("[5/5] 已写入 data/history.json")
     print(f"      日期        : {snap['date']}")
     print(f"      总资产(USDT): {snap['totalUsdt']:,.4f}")
     print(f"      现货        : {snap['spotUsdt']:,.4f}")
     print(f"      理财        : {snap['earnUsdt']:,.4f}")
     print(f"      日净值变化  : {snap.get('dailyChangeUsdt', 0):+,.4f}")
     print(f"      累计变化    : {snap['cumChangeUsdt']:+,.4f}（自 {base['date']}）")
+    send_bark(snap)
 
 
 # ---------------------------------------------------------------- mock 自检 ----------
