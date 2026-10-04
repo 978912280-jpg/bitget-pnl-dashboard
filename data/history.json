@@ -1,11 +1,11 @@
 [
   {
     "date": "2026-10-04",
-    "ts": 1791112601849,
-    "totalUsdt": 6974.821167,
-    "spotUsdt": 18.563606,
+    "ts": 1791113076693,
+    "totalUsdt": 6974.818215,
+    "spotUsdt": 18.560654,
     "earnUsdt": 6956.257561,
-    "marketPnlUsdt": 0.000202,
+    "marketPnlUsdt": 0.000178,
     "coinCount": 4,
     "byCoin": [
       {
@@ -25,15 +25,15 @@
       {
         "coin": "BGB",
         "amount": 5.623930078360639,
-        "price": 1.9976,
-        "usdt": 11.234363,
+        "price": 1.9971,
+        "usdt": 11.231551,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 5.3e-05,
-        "price": 85286.58,
-        "usdt": 4.520189,
+        "price": 85283.95,
+        "usdt": 4.520049,
         "kind": "spot"
       },
       {
