@@ -259,6 +259,27 @@ def load_history() -> list:
 
 
 POOLX_FILE = ROOT / "data" / "poolx_manual.json"
+MANUAL_FLOW_FILE = ROOT / "data" / "manual_flow.json"
+
+
+def load_manual_flow(today: str) -> dict:
+    """
+    读取手动记录的内部划转（如转美股账户），按日期存储。
+    格式：{"2026-10-05": {"outflow_usdt": 500.0, "inflow_usdt": 0.0, "note": "转美股"}, ...}
+    返回当天的 {outflow_usdt, inflow_usdt, note}，无则返回全零。
+    """
+    if not MANUAL_FLOW_FILE.exists():
+        return {"outflow_usdt": 0.0, "inflow_usdt": 0.0, "note": ""}
+    try:
+        raw = json.loads(MANUAL_FLOW_FILE.read_text("utf-8"))
+    except Exception:
+        return {"outflow_usdt": 0.0, "inflow_usdt": 0.0, "note": ""}
+    entry = raw.get(today, {})
+    return {
+        "outflow_usdt": float(entry.get("outflow_usdt", 0) or 0),
+        "inflow_usdt": float(entry.get("inflow_usdt", 0) or 0),
+        "note": str(entry.get("note", "") or ""),
+    }
 
 
 def load_manual_poolx() -> dict:
@@ -394,16 +415,27 @@ def send_bark(snap: dict):
         poolx_str = ", ".join(f"{c} {a:g}" for c, a in sorted(poolx.items()))
     else:
         poolx_str = "无"
+    mf = snap.get("manualFlow", {}) or {}
+    mf_out = mf.get("outflow_usdt", 0) or 0
+    mf_in = mf.get("inflow_usdt", 0) or 0
+    mf_note = mf.get("note", "") or ""
+    if mf_out > 0 or mf_in > 0:
+        mf_str = f"内部划转: 出 {mf_out:.2f} / 入 {mf_in:.2f}" + (f"（{mf_note}）" if mf_note else "")
+    else:
+        mf_str = ""
 
     title = f"Bitget 资产日报 · {snap['date']}"
-    body = (
-        f"总资产: {snap['totalUsdt']:,.2f} USDT\n"
-        f"今日盈亏: {daily:+.2f} USDT\n"
-        f"总盈亏: {cum:+.2f} USDT\n"
-        f"净出入金: {net_flow:+.2f}（充入 {dep:.2f} / 提出 {wit:.2f}）\n"
-        f"现货: {spot:,.2f} / 理财: {earn:,.2f}\n"
-        f"PoolX: {poolx_str}"
-    )
+    body_lines = [
+        f"总资产: {snap['totalUsdt']:,.2f} USDT",
+        f"今日盈亏: {daily:+.2f} USDT",
+        f"总盈亏: {cum:+.2f} USDT",
+        f"净出入金: {net_flow:+.2f}（充入 {dep:.2f} / 提出 {wit:.2f}）",
+    ]
+    if mf_str:
+        body_lines.append(mf_str)
+    body_lines.append(f"现货: {spot:,.2f} / 理财: {earn:,.2f}")
+    body_lines.append(f"PoolX: {poolx_str}")
+    body = "\n".join(body_lines)
     payload = {
         "title": title,
         "body": body,
@@ -472,9 +504,18 @@ def main():
         wit_usdt = sum_flow_usdt(wit_records, prices)
     print(f"      今日充入 {dep_usdt:.2f} / 提出 {wit_usdt:.2f} USDT"
           + (f"（{flow_note}）" if flow_note else ""))
+    # 手动记录的内部划转（如转美股账户），并入当日出入金
+    today_str = datetime.now(BEIJING).strftime("%Y-%m-%d")
+    manual_flow = load_manual_flow(today_str)
+    if manual_flow["outflow_usdt"] > 0 or manual_flow["inflow_usdt"] > 0:
+        dep_usdt += manual_flow["inflow_usdt"]
+        wit_usdt += manual_flow["outflow_usdt"]
+        print(f"      [info] 手动内部划转：充入 +{manual_flow['inflow_usdt']:.2f} / 提出 +{manual_flow['outflow_usdt']:.2f} USDT"
+              + (f"（{manual_flow['note']}）" if manual_flow["note"] else ""))
     print("[5/5] 汇总快照…")
     snap = build_snapshot(spot, earn, prices, dep_usdt, wit_usdt, flow_note)
     snap["poolx"] = manual  # 记录手动补充的 PoolX 持仓，供 Bark 推送核对
+    snap["manualFlow"] = manual_flow  # 记录手动内部划转，供 Bark 推送核对
     if snap["missing"]:
         print(f"[warn] 以下币种无 USDT 行情，未计入总值：{', '.join(snap['missing'])}")
 

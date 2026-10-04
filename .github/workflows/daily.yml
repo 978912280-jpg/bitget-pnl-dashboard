@@ -1,7 +1,7 @@
 name: 每日资产统计与 Pages 部署
 
 # 每天 UTC 00:10（北京时间 08:10）自动抓取一次；也支持手动触发（Actions 页面点 Run workflow）。
-# 手动触发时可选择性填写 PoolX 字段，实现表单式更新 PoolX 持仓（无需改 JSON）。
+# 手动触发时可选择性填写 PoolX 字段或内部划转字段，实现表单式更新（无需改 JSON）。
 on:
   schedule:
     - cron: "10 0 * * *"
@@ -23,6 +23,18 @@ on:
           - update
           - remove
         default: update
+      flow_outflow_usdt:
+        description: "今日手动划出（USDT），如转到美股账户；留空则不记录"
+        required: false
+        type: string
+      flow_inflow_usdt:
+        description: "今日手动划入（USDT），如从美股账户转回；留空则不记录"
+        required: false
+        type: string
+      flow_note:
+        description: "划转备注（如 转美股），可选"
+        required: false
+        type: string
 
 permissions:
   contents: write   # 提交 data/history.json 和 data/poolx_manual.json
@@ -107,6 +119,39 @@ jobs:
           print("data/poolx_manual.json 已写入")
           PY
 
+      # 可选：记录今日手动内部划转（如转美股账户），并入当日出入金
+      - name: 记录手动内部划转（可选）
+        if: ${{ inputs.flow_outflow_usdt != '' || inputs.flow_inflow_usdt != '' }}
+        env:
+          FLOW_OUTFLOW: ${{ inputs.flow_outflow_usdt }}
+          FLOW_INFLOW: ${{ inputs.flow_inflow_usdt }}
+          FLOW_NOTE: ${{ inputs.flow_note }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+          out_s = os.environ.get("FLOW_OUTFLOW", "").strip()
+          in_s = os.environ.get("FLOW_INFLOW", "").strip()
+          note = os.environ.get("FLOW_NOTE", "").strip()
+
+          path = Path("data/manual_flow.json")
+          data = json.loads(path.read_text()) if path.exists() else {}
+          entry = {
+              "outflow_usdt": float(out_s) if out_s else 0.0,
+              "inflow_usdt": float(in_s) if in_s else 0.0,
+          }
+          if note:
+              entry["note"] = note
+          data[today] = entry
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+          print(f"已记录 {today} 手动划转: 出 {entry['outflow_usdt']} / 入 {entry['inflow_usdt']} USDT"
+                + (f"（{note}）" if note else ""))
+          PY
+
       # 密钥全部来自仓库 Secrets，不进入代码仓库
       - name: 抓取资产与盈亏
         env:
@@ -116,12 +161,12 @@ jobs:
           BARK_KEY: ${{ secrets.BARK_KEY }}
         run: python fetch_pnl.py
 
-      - name: 提交历史数据与 PoolX 配置
+      - name: 提交历史数据与配置
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/history.json data/poolx_manual.json
-          git commit -m "chore: 更新 $(date +%F) 资产快照与 PoolX 配置" || echo "无数据变更，跳过提交"
+          git add data/history.json data/poolx_manual.json data/manual_flow.json
+          git commit -m "chore: 更新 $(date +%F) 资产快照与配置" || echo "无数据变更，跳过提交"
           git push
 
       - name: 组装站点文件
