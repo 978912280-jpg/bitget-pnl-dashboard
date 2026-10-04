@@ -1,36 +1,36 @@
 [
   {
     "date": "2026-10-04",
-    "ts": 1791117745923,
-    "totalUsdt": 18395.943397,
-    "spotUsdt": 18.754525,
-    "earnUsdt": 18377.188872,
-    "marketPnlUsdt": 1.193306,
+    "ts": 1791118043295,
+    "totalUsdt": 18520.32213,
+    "spotUsdt": 18.732062,
+    "earnUsdt": 18501.590068,
+    "marketPnlUsdt": 1.08925,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
     "flowNote": "",
-    "coinCount": 5,
+    "coinCount": 7,
     "byCoin": [
       {
         "coin": "USDGO",
         "amount": 6174.21258624,
-        "price": 1.0002,
-        "usdt": 6175.447429,
+        "price": 1.0003,
+        "usdt": 6176.06485,
         "kind": "earn"
       },
       {
         "coin": "BTC",
         "amount": 0.0717,
-        "price": 85244.27,
-        "usdt": 6112.014159,
+        "price": 85179.22,
+        "usdt": 6107.350074,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.6876,
-        "price": 121.52,
-        "usdt": 5308.917152,
+        "price": 121.37,
+        "usdt": 5302.364012,
         "kind": "earn"
       },
       {
@@ -41,24 +41,31 @@
         "kind": "earn"
       },
       {
+        "coin": "ETH",
+        "amount": 0.05,
+        "price": 2699.99,
+        "usdt": 134.9995,
+        "kind": "earn"
+      },
+      {
         "coin": "BGB",
         "amount": 5.672396728360639,
-        "price": 1.9981,
-        "usdt": 11.334016,
+        "price": 1.9947,
+        "usdt": 11.31473,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 5.3e-05,
-        "price": 85244.27,
-        "usdt": 4.517946,
+        "price": 85179.22,
+        "usdt": 4.514499,
         "kind": "spot"
       },
       {
         "coin": "USDGO",
         "amount": 2.706504,
-        "price": 1.0002,
-        "usdt": 2.707045,
+        "price": 1.0003,
+        "usdt": 2.707316,
         "kind": "spot"
       },
       {
@@ -67,6 +74,13 @@
         "price": 1.0,
         "usdt": 0.195517,
         "kind": "spot"
+      },
+      {
+        "coin": "XRP",
+        "amount": 0.001,
+        "price": 1.4994,
+        "usdt": 0.001499,
+        "kind": "earn"
       }
     ],
     "missing": [],
