@@ -15,48 +15,39 @@ import fetch_pnl as f  # noqa: E402
 
 BASE = "https://api.bitget.com"
 CANDIDATES = [
-    # 理财宝系列
-    "/api/v2/earn/savings/account",
-    "/api/v2/earn/savings/assets",
-    "/api/v2/earn/savings/assets?periodType=1",
-    "/api/v2/earn/savings/assets?periodType=2",
-    "/api/v2/earn/account/assets",
-    # PoolX 各种命名
-    "/api/v2/earn/poolx/account-assets",
-    "/api/v2/earn/poolx/assets",
-    "/api/v2/earn/poolx/position",
-    "/api/v2/earn/poolx/positions",
-    "/api/v2/earn/pool-x/account-assets",
-    "/api/v2/earn/pool-x/assets",
-    "/api/v2/earn/pool-x/positions",
-    "/api/v2/earn/launchpool/account-assets",
-    "/api/v2/earn/launchpool/assets",
-    "/api/v2/earn/launchpool/positions",
-    "/api/v2/earn/launchx/account-assets",
-    "/api/v2/earn/launchx/assets",
-    "/api/v2/earn/launchx/positions",
-    # 其他理财类别
-    "/api/v2/earn/shark-fin/account-assets",
-    "/api/v2/earn/staking/account-assets",
-    "/api/v2/earn/elite/account-assets",
-    "/api/v2/earn/elite-assets",
-    "/api/v2/earn/project/account-assets",
-    "/api/v2/earn/project/assets",
-    "/api/v2/earn/lock/account-assets",
-    "/api/v2/earn/lock/assets",
-    "/api/v2/earn/structured/account-assets",
-    "/api/v2/earn/range-sniper/account-assets",
-    # v3 系列
+    # ===== 第二轮：v3 系列（40084=接口存在但需统一账户模式；404=不存在）=====
+    "/api/v3/earn/account-assets",
     "/api/v3/earn/account/assets",
-    "/api/v3/earn/elite-assets",
-    "/api/v3/earn/elite-product",
     "/api/v3/earn/poolx/account-assets",
+    "/api/v3/earn/poolx/assets",
+    "/api/v3/earn/poolx/positions",
+    "/api/v3/earn/pool-x/account-assets",
+    "/api/v3/earn/launchpool/account-assets",
+    "/api/v3/earn/launchpool/assets",
+    "/api/v3/earn/staking/account-assets",
+    "/api/v3/earn/shark-fin/account-assets",
     "/api/v3/earn/savings/assets",
-    # 账户总览类
-    "/api/v2/account/all-account-balance",
-    "/api/v2/account/funding-assets",
-    "/api/v2/account/assets",
-    "/api/v2/account/spot-assets",
+    "/api/v3/earn/savings/account",
+    "/api/v3/earn/loan/account-assets",
+    # ===== 第二轮：v2 更多候选 =====
+    "/api/v2/earn/poolx-subscribe",
+    "/api/v2/earn/poolx-order",
+    "/api/v2/earn/poolx/order",
+    "/api/v2/earn/mining/account-assets",
+    "/api/v2/earn/farm/account-assets",
+    "/api/v2/earn/stake/account-assets",
+    "/api/v2/earn/project-order/account-assets",
+    "/api/v2/earn/loan/account-assets",
+    "/api/v2/earn/instloan/account-assets",
+    "/api/v2/earn/overview",
+    "/api/v2/earn/account",
+    "/api/v2/earn/position",
+    "/api/v2/earn/positions",
+    "/api/v2/earn/holdings",
+    "/api/v2/earn/assets",
+    # 对照基线
+    "/api/v2/earn/account/assets",
+    "/api/v2/earn/savings/assets",
 ]
 
 K = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("BITGET_API_KEY", "")
