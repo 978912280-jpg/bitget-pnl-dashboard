@@ -95,34 +95,72 @@ def fetch_spot(api_key: str, secret: str, passphrase: str) -> dict:
     return out
 
 
+EARN_CATEGORIES = [
+    # 名称, 接口路径。理财账户总览优先（若返回明细则覆盖面最全，含 PoolX 等全产品）。
+    ("理财账户总览", "/api/v2/earn/account/assets"),
+    ("理财宝活期",   "/api/v2/earn/savings/assets"),
+    ("PoolX",        "/api/v2/earn/pool-x/account-assets"),
+    ("PoolX-alias",  "/api/v2/earn/poolx/account-assets"),
+    ("鲨鱼鳍",       "/api/v2/earn/shark-fin/account-assets"),
+    ("质押",         "/api/v2/earn/staking/account-assets"),
+]
+
+AMOUNT_FIELDS = ("totalAmount", "amount", "balance", "lockAmount", "locked",
+                 "available", "principal", "principalAmount", "positionAmount")
+
+
+def _parse_holdings(items) -> dict:
+    """把任意理财端点的返回列表解析为 { coin: 数量 }，字段名做防御性匹配。"""
+    out = {}
+    for it in items or []:
+        if not isinstance(it, dict):
+            continue
+        coin = (it.get("coin") or it.get("currency") or it.get("baseCoin") or "").upper()
+        if not coin:
+            continue
+        amt = 0.0
+        for f in AMOUNT_FIELDS:
+            amt = _num(it.get(f))
+            if amt > 1e-12:
+                break
+        if amt > 1e-12:
+            out[coin] = amt
+    return out
+
+
 def fetch_earn(api_key: str, secret: str, passphrase: str) -> dict:
     """
     理财(Earn)持仓 -> { coin: 数量 }
-    优先用「理财宝持仓明细」/api/v2/earn/savings/assets（totalAmount=本金+利息）；
-    若不可用则退回「理财账户资产」/api/v2/earn/account/assets。
+    运行时探测多个理财端点（理财宝 / PoolX / 鲨鱼鳍 / 质押 / 账户总览），
+    逐个打印覆盖日志：
+      - 若「理财账户总览」返回了币种明细，直接采用它（覆盖全部产品，避免重复计）；
+      - 否则把各分类端点结果合并（同币种取较大值，防止重复统计）。
     """
-    data = None
-    try:
-        data = api_get("/api/v2/earn/savings/assets", api_key, secret, passphrase)
-    except Exception as exc:  # 不同账号开放的产品接口不同，失败则降级
-        print(f"[warn] /api/v2/earn/savings/assets 不可用：{exc}")
-    if not isinstance(data, list):
-        data = None
-    if data is None:
+    results = {}
+    for label, path in EARN_CATEGORIES:
         try:
-            data = api_get("/api/v2/earn/account/assets", api_key, secret, passphrase)
-            print("[info] 改用 /api/v2/earn/account/assets 读取理财资产")
+            data = api_get(path, api_key, secret, passphrase)
+            h = _parse_holdings(data if isinstance(data, list) else [data])
+            results[label] = h
+            detail = ", ".join(f"{c} {v:.6g}" for c, v in h.items()) or "（空）"
+            print(f"      [{label}] {path}：{len(h)} 币种 → {detail}")
         except Exception as exc:
-            raise RuntimeError(f"理财资产接口均不可用：{exc}")
-    out = {}
-    for it in data or []:
-        coin = (it.get("coin") or "").upper()
-        if not coin:
+            results[label] = {}
+            print(f"      [{label}] {path}：不可用（{str(exc)[:60]}）")
+
+    primary = results.get("理财账户总览")
+    if primary and sum(primary.values()) > 1e-9:
+        print("      [info] 采用「理财账户总览」作为理财持仓（含 PoolX 等全产品）")
+        return primary
+
+    merged = {}
+    for label, h in results.items():
+        if label == "理财账户总览":
             continue
-        total = _num(it.get("totalAmount")) or _num(it.get("amount")) or _num(it.get("balance"))
-        if total > 1e-12:
-            out[coin] = total
-    return out
+        for coin, amt in h.items():
+            merged[coin] = max(merged.get(coin, 0.0), amt)
+    print(f"      [info] 采用分类端点合并结果作为理财持仓（{len(merged)} 币种）")
+    return merged
 
 
 def fetch_prices() -> dict:
