@@ -83,9 +83,9 @@ python3 -m http.server 8080   # 打开 http://localhost:8080（页面需通过 h
 
 1. 打开仓库 **Actions** 页面，选中左侧「每日资产统计与 Pages 部署」工作流。
 2. 点右侧 **Run workflow**，展开表单后填写：
-   - `poolx_coin`：币种代码（如 `BTC`、`SOL`）
-   - `poolx_amount`：锁仓数量（如 `0.0717`）
-   - `poolx_ends`：结束日期 `YYYY-MM-DD`（到期后自动失效）
+   - `poolx_coin`：**单币种**填代码（如 `BTC`），配合下方数量/日期；**多币种一次填** `币种:数量:结束日期,币种:数量:结束日期`（如 `BTC:0.0717:2026-10-30,SOL:43.6876:2026-10-30`）；删除多币种填 `BTC,SOL`
+   - `poolx_amount`：单币种模式的锁仓数量（多币种模式忽略此框）
+   - `poolx_ends`：单币种模式的结束日期（多币种模式忽略此框）
    - `poolx_action`：`update`（新增/覆盖）或 `remove`（删除）
 3. 点绿色 **Run workflow**，约 30 秒后自动完成：更新配置 → 重新抓数 → 刷新仪表盘 → Bark 推送。
 4. 只重新抓数不动 PoolX 时，所有 PoolX 字段留空即可。
