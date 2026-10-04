@@ -1,11 +1,11 @@
 [
   {
     "date": "2026-10-04",
-    "ts": 1791115253400,
-    "totalUsdt": 18385.476496,
-    "spotUsdt": 18.56014,
-    "earnUsdt": 18366.916356,
-    "marketPnlUsdt": 1.094182,
+    "ts": 1791115392135,
+    "totalUsdt": 18393.08327,
+    "spotUsdt": 18.561886,
+    "earnUsdt": 18374.521383,
+    "marketPnlUsdt": 1.167029,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -22,15 +22,15 @@
       {
         "coin": "BTC",
         "amount": 0.0717,
-        "price": 85311.74,
-        "usdt": 6116.851758,
+        "price": 85344.69,
+        "usdt": 6119.214273,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.6876,
-        "price": 121.16,
-        "usdt": 5293.189616,
+        "price": 121.28,
+        "usdt": 5298.432128,
         "kind": "earn"
       },
       {
@@ -50,8 +50,8 @@
       {
         "coin": "BTC",
         "amount": 5.3e-05,
-        "price": 85311.74,
-        "usdt": 4.521522,
+        "price": 85344.69,
+        "usdt": 4.523269,
         "kind": "spot"
       },
       {
