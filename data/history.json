@@ -1,1 +1,58 @@
-[]
+[
+  {
+    "date": "2026-10-04",
+    "ts": 1791112601849,
+    "totalUsdt": 6974.821167,
+    "spotUsdt": 18.563606,
+    "earnUsdt": 6956.257561,
+    "marketPnlUsdt": 0.000202,
+    "coinCount": 4,
+    "byCoin": [
+      {
+        "coin": "USDGO",
+        "amount": 6174.21258624,
+        "price": 1.0002,
+        "usdt": 6175.447429,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDT",
+        "amount": 780.81013231,
+        "price": 1.0,
+        "usdt": 780.810132,
+        "kind": "earn"
+      },
+      {
+        "coin": "BGB",
+        "amount": 5.623930078360639,
+        "price": 1.9976,
+        "usdt": 11.234363,
+        "kind": "spot"
+      },
+      {
+        "coin": "BTC",
+        "amount": 5.3e-05,
+        "price": 85286.58,
+        "usdt": 4.520189,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDGO",
+        "amount": 2.62192575,
+        "price": 1.0002,
+        "usdt": 2.62245,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.18660412,
+        "price": 1.0,
+        "usdt": 0.186604,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "cumChangeUsdt": 0.0,
+    "cumChangePct": 0.0
+  }
+]
