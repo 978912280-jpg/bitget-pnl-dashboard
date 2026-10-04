@@ -264,8 +264,8 @@ POOLX_FILE = ROOT / "data" / "poolx_manual.json"
 def load_manual_poolx() -> dict:
     """
     手动补充无法通过 API 读取的锁仓持仓（如 PoolX）。
-    格式：{"BTC": {"amount": 0.0717, "ends": "2026-10-04"}, ...}
-    结束日期(ends)已过的条目自动忽略——此时币已回到现货账户，由 API 自动统计，避免重复计。
+    格式：{"BTC": {"amount": 0.0717, "updated": "2026-10-04"}, ...}
+    updated 为表单更新时自动填入的日期，仅作记录；条目长期有效，需手动删除才会移除。
     """
     if not POOLX_FILE.exists():
         return {}
@@ -274,14 +274,9 @@ def load_manual_poolx() -> dict:
     except Exception as exc:
         print(f"[warn] 读取 {POOLX_FILE.name} 失败：{exc}")
         return {}
-    today = datetime.now(BEIJING).strftime("%Y-%m-%d")
     out = {}
     for coin, cfg in (raw or {}).items():
         if not isinstance(cfg, dict):
-            continue
-        ends = str(cfg.get("ends") or "")
-        if ends and ends < today:
-            print(f"      [info] {coin} PoolX 已于 {ends} 结束，跳过手动补充（届时由现货接口自动统计）")
             continue
         amt = _num(cfg.get("amount"))
         if amt > 1e-12:

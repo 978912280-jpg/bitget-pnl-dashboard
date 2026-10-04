@@ -8,15 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       poolx_coin:
-        description: "单币种填代码（如 BTC），配合下方数量/日期；多币种一次填 COIN:数量:结束日期,COIN:数量:结束日期（如 BTC:0.0717:2026-10-30,SOL:43.6876:2026-10-30）；删除多币种填 BTC,SOL；留空则不更新"
+        description: "单币种填代码（如 BTC），配合下方数量；多币种一次填 COIN:数量,COIN:数量（如 BTC:0.0717,SOL:43.6876）；删除多币种填 BTC,SOL；留空则不更新"
         required: false
         type: string
       poolx_amount:
         description: "单币种模式的锁仓数量（如 0.0717）；多币种模式忽略此框"
-        required: false
-        type: string
-      poolx_ends:
-        description: "单币种模式的结束日期 YYYY-MM-DD；多币种模式忽略此框"
         required: false
         type: string
       poolx_action:
@@ -56,25 +52,25 @@ jobs:
         env:
           POOLX_COIN: ${{ inputs.poolx_coin }}
           POOLX_AMOUNT: ${{ inputs.poolx_amount }}
-          POOLX_ENDS: ${{ inputs.poolx_ends }}
           POOLX_ACTION: ${{ inputs.poolx_action }}
         run: |
           python3 - <<'PY'
           import json, os
+          from datetime import datetime, timedelta, timezone
           from pathlib import Path
 
           coin_raw = os.environ.get("POOLX_COIN", "").strip()
           amount = os.environ.get("POOLX_AMOUNT", "").strip()
-          ends = os.environ.get("POOLX_ENDS", "").strip()
           action = os.environ.get("POOLX_ACTION", "update").strip()
+          today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
 
           if not coin_raw:
               print("未提供币种，跳过")
               raise SystemExit(0)
 
           # 自动识别格式：
-          #   多币种: COIN:AMOUNT:ENDS,COIN:AMOUNT:ENDS  （删除时可只写 COIN,COIN）
-          #   单币种: COIN（数量和日期从单独输入框取）
+          #   多币种: COIN:AMOUNT,COIN:AMOUNT  （删除时可只写 COIN,COIN）
+          #   单币种: COIN（数量从单独输入框取）
           entries = []
           if "," in coin_raw or ":" in coin_raw:
               for part in coin_raw.split(","):
@@ -84,16 +80,15 @@ jobs:
                   segs = part.split(":")
                   c = segs[0].strip().upper()
                   a = segs[1].strip() if len(segs) > 1 else ""
-                  e = segs[2].strip() if len(segs) > 2 else ""
-                  entries.append((c, a, e))
+                  entries.append((c, a))
               print(f"识别到多币种模式，共 {len(entries)} 个")
           else:
-              entries.append((coin_raw.upper(), amount, ends))
+              entries.append((coin_raw.upper(), amount))
 
           path = Path("data/poolx_manual.json")
           data = json.loads(path.read_text()) if path.exists() else {}
 
-          for c, a, e in entries:
+          for c, a in entries:
               if action == "remove":
                   if c in data:
                       del data[c]
@@ -104,11 +99,8 @@ jobs:
                   if not a:
                       print(f"错误：{c} 的 update 操作必须提供数量")
                       raise SystemExit(1)
-                  entry = {"amount": float(a)}
-                  if e:
-                      entry["ends"] = e
-                  data[c] = entry
-                  print(f"已更新 {c}: {entry}")
+                  data[c] = {"amount": float(a), "updated": today}
+                  print(f"已更新 {c}: amount={a}, updated={today}")
 
           path.parent.mkdir(parents=True, exist_ok=True)
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
