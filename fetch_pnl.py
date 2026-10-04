@@ -48,25 +48,32 @@ def sign(secret: str, timestamp: str, method: str, request_path: str, body: str)
 
 
 def api_get(path: str, api_key: str, secret: str, passphrase: str) -> list | dict:
-    """带鉴权的 GET 请求，返回响应中的 data 字段。失败时抛出带响应体的异常。"""
-    timestamp = str(int(time.time() * 1000))
-    req = Request(BASE + path, method="GET")
-    req.add_header("ACCESS-KEY", api_key)
-    req.add_header("ACCESS-SIGN", sign(secret, timestamp, "GET", path, ""))
-    req.add_header("ACCESS-TIMESTAMP", timestamp)
-    req.add_header("ACCESS-PASSPHRASE", passphrase)
-    req.add_header("Content-Type", "application/json")
-    try:
-        with urlopen(req, timeout=30) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
-    except HTTPError as e:
-        detail = e.read().decode("utf-8", "ignore")
-        raise RuntimeError(f"HTTP {e.code} {path}: {detail}")
-    except URLError as e:
-        raise RuntimeError(f"网络错误 {path}: {e.reason}")
-    if payload.get("code") != OK_CODE:
-        raise RuntimeError(f"接口报错 {path}: code={payload.get('code')} msg={payload.get('msg')}")
-    return payload.get("data")
+    """带鉴权的 GET 请求，返回响应中的 data 字段。失败时抛出带响应体的异常。网络错误自动重试 3 次。"""
+    last_exc = None
+    for attempt in range(3):
+        timestamp = str(int(time.time() * 1000))
+        req = Request(BASE + path, method="GET")
+        req.add_header("ACCESS-KEY", api_key)
+        req.add_header("ACCESS-SIGN", sign(secret, timestamp, "GET", path, ""))
+        req.add_header("ACCESS-TIMESTAMP", timestamp)
+        req.add_header("ACCESS-PASSPHRASE", passphrase)
+        req.add_header("Content-Type", "application/json")
+        try:
+            with urlopen(req, timeout=30) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            if payload.get("code") != OK_CODE:
+                raise RuntimeError(f"接口报错 {path}: code={payload.get('code')} msg={payload.get('msg')}")
+            return payload.get("data")
+        except HTTPError as e:
+            detail = e.read().decode("utf-8", "ignore")
+            raise RuntimeError(f"HTTP {e.code} {path}: {detail}")
+        except URLError as e:
+            last_exc = e
+            if attempt < 2:
+                time.sleep(2 * (attempt + 1))
+                continue
+            raise RuntimeError(f"网络错误 {path}: {e.reason}")
+    raise RuntimeError(f"网络错误 {path}: {last_exc}")  # 理论上不可达
 
 
 # ---------------------------------------------------------------- 数据源 ----------
