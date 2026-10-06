@@ -171,11 +171,11 @@
   },
   {
     "date": "2026-10-06",
-    "ts": 1791258935169,
-    "totalUsdt": 18362.290212,
-    "spotUsdt": 22.811294,
-    "earnUsdt": 18339.478918,
-    "marketPnlUsdt": -0.484925,
+    "ts": 1791297099921,
+    "totalUsdt": 18440.531112,
+    "spotUsdt": 24.853368,
+    "earnUsdt": 18415.677744,
+    "marketPnlUsdt": 0.287225,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -185,22 +185,22 @@
       {
         "coin": "BTC",
         "amount": 0.0724,
-        "price": 85519.61,
-        "usdt": 6191.619764,
+        "price": 86031.5,
+        "usdt": 6228.6806,
         "kind": "earn"
       },
       {
         "coin": "USDGO",
         "amount": 6177.25740324,
-        "price": 1.0003,
-        "usdt": 6179.11058,
+        "price": 1.0002,
+        "usdt": 6178.492855,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.6876,
-        "price": 120.08,
-        "usdt": 5246.007008,
+        "price": 120.99,
+        "usdt": 5285.762724,
         "kind": "earn"
       },
       {
@@ -212,37 +212,37 @@
       },
       {
         "coin": "BGB",
-        "amount": 7.137879803576198,
-        "price": 1.9967,
-        "usdt": 14.252205,
+        "amount": 10.309051513576199,
+        "price": 1.9979,
+        "usdt": 20.596454,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 4.8e-05,
-        "price": 85519.61,
-        "usdt": 4.104941,
+        "price": 86031.5,
+        "usdt": 4.129512,
         "kind": "spot"
       },
       {
         "coin": "USDGO",
-        "amount": 2.96161518,
-        "price": 1.0003,
-        "usdt": 2.962504,
+        "amount": 0.08461996,
+        "price": 1.0002,
+        "usdt": 0.084637,
         "kind": "spot"
       },
       {
         "coin": "CT",
-        "amount": 3.75283508,
-        "price": 0.37108,
-        "usdt": 1.392602,
+        "amount": 0.09021989,
+        "price": 0.38256,
+        "usdt": 0.034515,
         "kind": "spot"
       },
       {
         "coin": "USDT",
-        "amount": 0.09904223,
+        "amount": 0.00825047,
         "price": 1.0,
-        "usdt": 0.099042,
+        "usdt": 0.00825,
         "kind": "spot"
       }
     ],
@@ -256,9 +256,9 @@
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": -84.408809,
-    "dailyChangePct": -0.457582,
-    "cumChangeUsdt": -42.089944,
-    "cumChangePct": -0.228695
+    "dailyChangeUsdt": -6.167909,
+    "dailyChangePct": -0.033436,
+    "cumChangeUsdt": 36.150956,
+    "cumChangePct": 0.196426
   }
 ]
