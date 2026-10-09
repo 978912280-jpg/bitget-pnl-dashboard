@@ -553,7 +553,8 @@ def main():
     print(f"      理财        : {snap['earnUsdt']:,.4f}")
     print(f"      日净值变化  : {snap.get('dailyChangeUsdt', 0):+,.4f}")
     print(f"      累计变化    : {snap['cumChangeUsdt']:+,.4f}（自 {base['date']}）")
-    send_bark(snap)
+    # Bark 推送已移至工作流的 Pages 部署之后，确保通知到达时页面已更新
+    # send_bark(snap)
 
 
 # ---------------------------------------------------------------- mock 自检 ----------

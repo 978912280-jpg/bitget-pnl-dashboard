@@ -182,3 +182,64 @@ jobs:
       - name: 部署到 GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # Pages 部署完成后再发 Bark，确保用户点通知时仪表盘已是最新数据
+      - name: Bark 推送资产日报
+        if: always()
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          from pathlib import Path
+
+          bark_key = os.environ.get("BARK_KEY", "").strip().rstrip("/")
+          if not bark_key:
+              print("未配置 BARK_KEY，跳过推送")
+              raise SystemExit(0)
+          url = bark_key if bark_key.startswith("http") else f"https://api.day.app/{bark_key}"
+
+          hist = json.loads(Path("data/history.json").read_text())
+          snap = hist[-1]
+          daily = snap.get("dailyChangeUsdt", 0) or 0
+          cum = snap.get("cumChangeUsdt", 0) or 0
+          net_flow = snap.get("netFlowUsdt", 0) or 0
+          dep = snap.get("depositUsdt", 0) or 0
+          wit = snap.get("withdrawUsdt", 0) or 0
+          spot = snap.get("spotUsdt", 0) or 0
+          earn = snap.get("earnUsdt", 0) or 0
+          poolx = snap.get("poolx", {}) or {}
+          poolx_str = ", ".join(f"{c} {a:g}" for c, a in sorted(poolx.items())) if poolx else "无"
+          mf = snap.get("manualFlow", {}) or {}
+          mf_out = mf.get("outflow_usdt", 0) or 0
+          mf_in = mf.get("inflow_usdt", 0) or 0
+          mf_note = mf.get("note", "") or ""
+
+          lines = [
+              f"总资产: {snap['totalUsdt']:,.2f} USDT",
+              f"今日盈亏: {daily:+.2f} USDT",
+              f"总盈亏: {cum:+.2f} USDT",
+              f"净出入金: {net_flow:+.2f}（充入 {dep:.2f} / 提出 {wit:.2f}）",
+          ]
+          if mf_out > 0 or mf_in > 0:
+              lines.append(f"手动出入金: 出 {mf_out:.2f} / 入 {mf_in:.2f}" + (f"（{mf_note}）" if mf_note else ""))
+          lines.append(f"现货: {spot:,.2f} / 理财: {earn:,.2f}")
+          lines.append(f"PoolX: {poolx_str}")
+          body = "\n".join(lines)
+
+          payload = {
+              "title": f"Bitget 资产日报 · {snap['date']}",
+              "body": body,
+              "group": "bitget-pnl",
+              "level": "active",
+              "sound": "minuet",
+              "url": "https://978912280-jpg.github.io/bitget-pnl-dashboard/",
+          }
+          req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                                        headers={"Content-Type": "application/json"}, method="POST")
+          try:
+              with urllib.request.urlopen(req, timeout=15) as r:
+                  print(f"[bark] 推送成功 ✅ (HTTP {r.status})")
+          except Exception as e:
+              print(f"[bark] 推送失败: {e}")
+          PY
