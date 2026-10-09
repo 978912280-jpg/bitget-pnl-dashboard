@@ -447,11 +447,11 @@
   },
   {
     "date": "2026-10-09",
-    "ts": 1791506196291,
-    "totalUsdt": 17638.540628,
-    "spotUsdt": 8.961242,
-    "earnUsdt": 17629.579386,
-    "marketPnlUsdt": -0.057076,
+    "ts": 1791530148248,
+    "totalUsdt": 17738.351192,
+    "spotUsdt": 10.107071,
+    "earnUsdt": 17728.244121,
+    "marketPnlUsdt": 0.946028,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -468,15 +468,15 @@
       {
         "coin": "BTC",
         "amount": 0.0735,
-        "price": 81849.93,
-        "usdt": 6015.969855,
+        "price": 82542.0,
+        "usdt": 6066.837,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 109.32,
-        "usdt": 4793.79132,
+        "price": 110.41,
+        "usdt": 4841.58891,
         "kind": "earn"
       },
       {
@@ -488,32 +488,31 @@
       },
       {
         "coin": "BGB",
-        "amount": 3.620992493594531,
-        "price": 1.9323,
-        "usdt": 6.996844,
+        "amount": 4.1886921535945305,
+        "price": 1.94,
+        "usdt": 8.126063,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 2.4e-05,
-        "price": 81849.93,
-        "usdt": 1.964398,
+        "price": 82542.0,
+        "usdt": 1.981008,
         "kind": "spot"
       }
     ],
     "missing": [],
     "poolx": {
-      "BTC": 0.0735,
-      "SOL": 43.851
+      "BTC": 0.0735
     },
     "manualFlow": {
       "outflow_usdt": 0.0,
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": -404.355154,
-    "dailyChangePct": -2.241077,
-    "cumChangeUsdt": -765.839528,
-    "cumChangePct": -4.161181
+    "dailyChangeUsdt": -304.54459,
+    "dailyChangePct": -1.687892,
+    "cumChangeUsdt": -666.028964,
+    "cumChangePct": -3.618861
   }
 ]
