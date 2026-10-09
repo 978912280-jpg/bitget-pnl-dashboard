@@ -420,7 +420,7 @@ def send_bark(snap: dict):
     mf_in = mf.get("inflow_usdt", 0) or 0
     mf_note = mf.get("note", "") or ""
     if mf_out > 0 or mf_in > 0:
-        mf_str = f"内部划转: 出 {mf_out:.2f} / 入 {mf_in:.2f}" + (f"（{mf_note}）" if mf_note else "")
+        mf_str = f"手动出入金: 出 {mf_out:.2f} / 入 {mf_in:.2f}" + (f"（{mf_note}）" if mf_note else "")
     else:
         mf_str = ""
 
@@ -531,11 +531,15 @@ def main():
 
     if len(history) >= 2:
         prev, cur = history[-2], history[-1]
-        daily = cur["totalUsdt"] - prev["totalUsdt"]
+        # 今日盈亏 = 总资产变化 - 今日净出入金（入金/出金是本金变动，不是盈亏）
+        net_flow = cur.get("netFlowUsdt", 0) or 0
+        daily = cur["totalUsdt"] - prev["totalUsdt"] - net_flow
         cur["dailyChangeUsdt"] = round(daily, 6)
         cur["dailyChangePct"] = round(daily / prev["totalUsdt"] * 100, 6) if prev["totalUsdt"] else 0.0
     base = history[0]
-    cum = snap["totalUsdt"] - base["totalUsdt"]
+    # 总盈亏 = 总资产变化 - 累计净出入金（从第2天起累加，首日为基准）
+    cum_net_flow = sum(h.get("netFlowUsdt", 0) or 0 for h in history[1:])
+    cum = snap["totalUsdt"] - base["totalUsdt"] - cum_net_flow
     snap["cumChangeUsdt"] = round(cum, 6)
     snap["cumChangePct"] = round(cum / base["totalUsdt"] * 100, 6) if base["totalUsdt"] else 0.0
     if replaced:
