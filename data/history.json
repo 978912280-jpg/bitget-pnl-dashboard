@@ -517,11 +517,11 @@
   },
   {
     "date": "2026-10-10",
-    "ts": 1791572224036,
-    "totalUsdt": 19194.32291,
-    "spotUsdt": 1513.685192,
-    "earnUsdt": 17680.637718,
-    "marketPnlUsdt": 0.464683,
+    "ts": 1791572437626,
+    "totalUsdt": 19194.275125,
+    "spotUsdt": 1513.533273,
+    "earnUsdt": 17680.741851,
+    "marketPnlUsdt": 0.437198,
     "depositUsdt": 1502.32,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 1502.32,
@@ -531,29 +531,29 @@
       {
         "coin": "USDGO",
         "amount": 6181.31966208,
-        "price": 1.0008,
-        "usdt": 6186.264718,
+        "price": 1.0007,
+        "usdt": 6185.646586,
         "kind": "earn"
       },
       {
         "coin": "BTC",
         "amount": 0.0735,
-        "price": 82476.53,
-        "usdt": 6062.024955,
+        "price": 82450.56,
+        "usdt": 6060.11616,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 109.42,
-        "usdt": 4798.17642,
+        "price": 109.48,
+        "usdt": 4800.80748,
         "kind": "earn"
       },
       {
         "coin": "USDGO",
         "amount": 1502.07364427,
-        "price": 1.0008,
-        "usdt": 1503.275303,
+        "price": 1.0007,
+        "usdt": 1503.125096,
         "kind": "spot"
       },
       {
@@ -566,22 +566,22 @@
       {
         "coin": "BGB",
         "amount": 4.1886921535945305,
-        "price": 1.9408,
-        "usdt": 8.129414,
+        "price": 1.9409,
+        "usdt": 8.129833,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 2.4e-05,
-        "price": 82476.53,
-        "usdt": 1.979437,
+        "price": 82450.56,
+        "usdt": 1.978813,
         "kind": "spot"
       },
       {
         "coin": "CT",
         "amount": 0.92436329,
-        "price": 0.32567,
-        "usdt": 0.301037,
+        "price": 0.32404,
+        "usdt": 0.299531,
         "kind": "spot"
       },
       {
@@ -601,9 +601,9 @@
       "inflow_usdt": 1502.32,
       "note": "入金"
     },
-    "dailyChangeUsdt": -46.348282,
-    "dailyChangePct": -0.261289,
-    "cumChangeUsdt": -712.377246,
-    "cumChangePct": -3.870694
+    "dailyChangeUsdt": -46.396067,
+    "dailyChangePct": -0.261558,
+    "cumChangeUsdt": -712.425031,
+    "cumChangePct": -3.870954
   }
 ]
