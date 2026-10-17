@@ -1183,5 +1183,101 @@
     "dailyChangePct": 0.66115,
     "cumChangeUsdt": -841.953256,
     "cumChangePct": -4.574744
+  },
+  {
+    "date": "2026-10-17",
+    "ts": 1792197898168,
+    "totalUsdt": 18940.946831,
+    "spotUsdt": 35.709279,
+    "earnUsdt": 18905.237552,
+    "marketPnlUsdt": -0.084935,
+    "depositUsdt": 0.0,
+    "withdrawUsdt": 0.0,
+    "netFlowUsdt": 0.0,
+    "flowNote": "",
+    "coinCount": 5,
+    "byCoin": [
+      {
+        "coin": "USDGO",
+        "amount": 7696.9638123,
+        "price": 1.0013,
+        "usdt": 7706.969865,
+        "kind": "earn"
+      },
+      {
+        "coin": "BTC",
+        "amount": 0.07607084,
+        "price": 81572.0,
+        "usdt": 6205.25056,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 43.851,
+        "price": 104.3,
+        "usdt": 4573.6593,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDT",
+        "amount": 399.96116407,
+        "price": 1.0,
+        "usdt": 399.961164,
+        "kind": "earn"
+      },
+      {
+        "coin": "BTC",
+        "amount": 0.0003686578,
+        "price": 81572.0,
+        "usdt": 30.072154,
+        "kind": "spot"
+      },
+      {
+        "coin": "BGB",
+        "amount": 10.18732238,
+        "price": 1.904,
+        "usdt": 19.396662,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 0.03666663,
+        "price": 104.3,
+        "usdt": 3.82433,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDGO",
+        "amount": 1.6693886,
+        "price": 1.0013,
+        "usdt": 1.671559,
+        "kind": "spot"
+      },
+      {
+        "coin": "BGB",
+        "amount": 0.0469218545324904,
+        "price": 1.904,
+        "usdt": 0.089339,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.051897743736,
+        "price": 1.0,
+        "usdt": 0.051898,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "poolx": {},
+    "manualFlow": {
+      "outflow_usdt": 0.0,
+      "inflow_usdt": 0.0,
+      "note": ""
+    },
+    "dailyChangeUsdt": -123.800069,
+    "dailyChangePct": -0.649366,
+    "cumChangeUsdt": -965.753325,
+    "cumChangePct": -5.24741
   }
 ]
