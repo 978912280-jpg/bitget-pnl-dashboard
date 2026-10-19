@@ -69,6 +69,31 @@
   .empty code{color:var(--accent);background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:12px}
   footer{margin-top:24px;color:var(--faint);font-size:12px;line-height:1.9}
   footer .t{color:var(--muted)}
+  /* 盈亏统计模块 */
+  .pnl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .pnl-controls{display:flex;align-items:center;gap:8px}
+  .period-tabs{display:flex;background:var(--panel2);border-radius:8px;padding:2px}
+  .period-tabs button{background:none;border:none;color:var(--muted);padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+  .period-tabs button.active{background:var(--accent);color:#0b1020;font-weight:700}
+  .view-toggle{display:flex;background:var(--panel2);border-radius:8px;padding:2px}
+  .view-toggle button{background:none;border:none;color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}
+  .view-toggle button.active{background:var(--panel);color:var(--accent)}
+  .pnl-summary{color:var(--muted);font-size:13px;margin:8px 0 12px}
+  .pnl-summary b{color:var(--text);font-size:18px;font-weight:800;margin-left:6px}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .cal-nav button{background:var(--panel2);border:1px solid var(--line);color:var(--text);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .cal-nav button:hover{border-color:var(--accent)}
+  .cal-nav span{font-weight:700;font-size:14px;min-width:90px;text-align:center}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-dow{text-align:center;color:var(--faint);font-size:11px;padding:4px 0;font-weight:500}
+  .cal-cell{background:var(--panel2);border-radius:8px;padding:6px 2px;text-align:center;min-height:50px;display:flex;flex-direction:column;justify-content:center;transition:background .15s}
+  .cal-cell .d{font-size:12px;font-weight:600;color:var(--muted)}
+  .cal-cell .v{font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:600}
+  .cal-cell.pos{background:rgba(52,211,153,0.14)}.cal-cell.pos .v{color:var(--pos)}
+  .cal-cell.neg{background:rgba(248,113,113,0.14)}.cal-cell.neg .v{color:var(--neg)}
+  .cal-cell.empty{background:transparent}
+  .cal-cell.today{border:1.5px solid var(--accent)}
+  .cal-cell.future .d{opacity:.35}
   @media(max-width:760px){
     .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
     .charts{grid-template-columns:1fr}
@@ -76,6 +101,8 @@
     .chart{height:250px}
     .kpi .val{font-size:20px}
     h1{font-size:18px}
+    .cal-cell{min-height:44px;padding:4px 1px}
+    .cal-cell .v{font-size:9px}
   }
 </style>
 </head>
@@ -201,9 +228,28 @@ function render(hist){
   const dates=hist.map(h=>h.date);
   $('#charts').innerHTML=`
     <div class="card wide"><h2>总资产趋势</h2><div class="desc">全账户净值（现货+理财）随时间变化</div><div class="chart" id="c_total"></div></div>
+    <div class="card wide" id="pnlSection">
+      <div class="pnl-head">
+        <h2>盈亏统计</h2>
+        <div class="pnl-controls">
+          <div class="period-tabs" id="periodTabs">
+            <button data-p="day" class="active">日</button>
+            <button data-p="week">周</button>
+            <button data-p="month">月</button>
+            <button data-p="year">年</button>
+          </div>
+          <div class="view-toggle" id="viewToggle">
+            <button data-v="calendar" class="active" title="日历视图">▦</button>
+            <button data-v="chart" title="图表视图">▤</button>
+          </div>
+        </div>
+      </div>
+      <div class="pnl-summary" id="pnlSummary"></div>
+      <div id="pnlCalendar"></div>
+      <div class="chart" id="c_pnl" style="display:none"></div>
+    </div>
     <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
-    <div class="card"><h2>每日盈亏</h2><div class="desc">相邻快照的净值增量（含充提与行情）</div><div class="chart" id="c_daily"></div></div>
-    <div class="card wide"><h2>币种分布</h2><div class="desc">最新快照中各币 USDT 市值（现货+理财合并，取前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
+    <div class="card"><h2>币种分布</h2><div class="desc">最新快照各币 USDT 市值（前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
 
   const axisColor='#5a6680', textColor='#8b96ad';
   const baseAxis={axisLine:{lineStyle:{color:'#243049'}},axisLabel:{color:textColor,fontFamily:'Noto Sans SC'},splitLine:{lineStyle:{color:'#1c2440'}}};
@@ -235,16 +281,103 @@ function render(hist){
     ]
   });
 
-  // 每日净值变化（柱状，0 基线）
-  const dailyArr=hist.map(h=>h.dailyChangeUsdt!=null?h.dailyChangeUsdt:0);
-  echarts.init($('#c_daily')).setOption({
-    grid:{left:60,right:24,top:20,bottom:34},
-    tooltip:{...tip,valueFormatter:v=>signed(v)+' USDT'},
-    xAxis:{type:'category',data:dates,...baseAxis},
-    yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
-    series:[{type:'bar',data:dailyArr,barWidth:'48%',
-      itemStyle:{color:p=>p.value>=0?'#34d399':'#f87171',borderRadius:[4,4,0,0]}}]
+  // —— 盈亏统计模块（日历/图表 + 日/周/月/年切换）——
+  const pnlState={period:'day',view:'calendar',calYear:0,calMonth:0};
+  (()=>{const now=new Date();pnlState.calYear=now.getFullYear();pnlState.calMonth=now.getMonth();})();
+
+  // 按周期聚合盈亏
+  function aggPnl(period){
+    const g={};
+    hist.forEach(h=>{
+      if(h.dailyChangeUsdt==null)return;
+      const d=new Date(h.date+'T00:00:00');
+      let key;
+      if(period==='day')key=h.date;
+      else if(period==='week'){
+        const onejan=new Date(d.getFullYear(),0,1);
+        const wk=Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
+        key=d.getFullYear()+'-W'+String(wk).padStart(2,'0');
+      }
+      else if(period==='month')key=h.date.slice(0,7);
+      else key=String(d.getFullYear());
+      g[key]=(g[key]||0)+h.dailyChangeUsdt;
+    });
+    return Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0]));
+  }
+
+  // 渲染日历
+  function renderCalendar(){
+    const y=pnlState.calYear,m=pnlState.calMonth;
+    const first=new Date(y,m,1);
+    const lastDay=new Date(y,m+1,0).getDate();
+    const startDow=(first.getDay()+6)%7; // 周一为0
+    const today=new Date();const todayStr=today.toISOString().slice(0,10);
+    // 当月盈亏汇总
+    const prefix=y+'-'+String(m+1).padStart(2,'0');
+    const monthTotal=hist.filter(h=>h.date.startsWith(prefix)).reduce((s,h)=>s+(h.dailyChangeUsdt||0),0);
+    $('#pnlSummary').innerHTML=`截至 ${prefix} 的收益额 <b class="${monthTotal>=0?'pos':'neg'}">${signed(monthTotal)} USDT</b>`;
+
+    const dows=['一','二','三','四','五','六','日'];
+    let html='<div class="cal-nav"><button id="calPrev">‹</button><span>'+y+'-'+String(m+1).padStart(2,'0')+'</span><button id="calNext">›</button></div>';
+    html+='<div class="cal-grid">'+dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+    for(let i=0;i<startDow;i++)html+='<div class="cal-cell empty"></div>';
+    for(let day=1;day<=lastDay;day++){
+      const ds=prefix+'-'+String(day).padStart(2,'0');
+      const rec=hist.find(h=>h.date===ds);
+      const v=rec?rec.dailyChangeUsdt:null;
+      const isToday=ds===todayStr;
+      const isFuture=new Date(ds)>today;
+      let cls='cal-cell';
+      if(v!=null)cls+=v>=0?' pos':' neg';
+      if(isToday)cls+=' today';
+      if(isFuture&&v==null)cls+=' future';
+      const valStr=v!=null?(v>=0?'+':'')+fmt(v,1):(isFuture?'—':'0.0');
+      html+=`<div class="${cls}"><div class="d">${day}</div><div class="v">${valStr}</div></div>`;
+    }
+    html+='</div>';
+    $('#pnlCalendar').innerHTML=html;
+    $('#pnlCalendar').style.display='';
+    $('#c_pnl').style.display='none';
+    $('#calPrev').onclick=()=>{pnlState.calMonth--;if(pnlState.calMonth<0){pnlState.calMonth=11;pnlState.calYear--;}renderCalendar();};
+    $('#calNext').onclick=()=>{pnlState.calMonth++;if(pnlState.calMonth>11){pnlState.calMonth=0;pnlState.calYear++;}renderCalendar();};
+  }
+
+  // 渲染图表
+  function renderPnlChart(){
+    const data=aggPnl(pnlState.period);
+    const labels=data.map(x=>x[0]);
+    const vals=data.map(x=>Math.round(x[1]*100)/100);
+    const total=vals.reduce((s,v)=>s+v,0);
+    const periodLabel={day:'日',week:'周',month:'月',year:'年'}[pnlState.period];
+    $('#pnlSummary').innerHTML=`按${periodLabel}统计 · 累计 <b class="${total>=0?'pos':'neg'}">${signed(total)} USDT</b>（共 ${data.length} 个${periodLabel}）`;
+    $('#pnlCalendar').style.display='none';
+    $('#c_pnl').style.display='';
+    const chart=echarts.getInstanceByDom($('#c_pnl'))||echarts.init($('#c_pnl'));
+    chart.setOption({
+      grid:{left:60,right:24,top:20,bottom:34},
+      tooltip:{...tip,valueFormatter:v=>signed(v)+' USDT'},
+      xAxis:{type:'category',data:labels,...baseAxis,axisLabel:{color:textColor,rotate:labels.length>8?30:0}},
+      yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+      series:[{type:'bar',data:vals,barWidth:'55%',
+        itemStyle:{color:p=>p.value>=0?'#34d399':'#f87171',borderRadius:[4,4,0,0]},
+        label:{show:true,position:'top',color:'#8b96ad',fontSize:10,formatter:p=>p.value>=0?'+':''+fmt(p.value,0)}}]
+    },true);
+  }
+
+  // 切换事件
+  $('#periodTabs').addEventListener('click',e=>{
+    const btn=e.target.closest('button');if(!btn)return;
+    pnlState.period=btn.dataset.p;
+    $('#periodTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===btn));
+    if(pnlState.view==='chart')renderPnlChart();
   });
+  $('#viewToggle').addEventListener('click',e=>{
+    const btn=e.target.closest('button');if(!btn)return;
+    pnlState.view=btn.dataset.v;
+    $('#viewToggle').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===btn));
+    if(pnlState.view==='calendar')renderCalendar();else renderPnlChart();
+  });
+  renderCalendar(); // 默认日历视图
 
   // 币种分布（横向条形）
   const agg={};
