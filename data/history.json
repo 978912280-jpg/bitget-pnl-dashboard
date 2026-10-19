@@ -1378,11 +1378,11 @@
   },
   {
     "date": "2026-10-19",
-    "ts": 1792373027603,
-    "totalUsdt": 20041.368073,
-    "spotUsdt": 35.68336,
-    "earnUsdt": 20005.684713,
-    "marketPnlUsdt": 0.576124,
+    "ts": 1792373370896,
+    "totalUsdt": 20041.099912,
+    "spotUsdt": 35.678857,
+    "earnUsdt": 20005.421055,
+    "marketPnlUsdt": 0.571702,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -1399,15 +1399,15 @@
       {
         "coin": "BTC",
         "amount": 0.07681115,
-        "price": 82486.16,
-        "usdt": 6335.856809,
+        "price": 82471.23,
+        "usdt": 6334.710018,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 104.76,
-        "usdt": 4593.83076,
+        "price": 104.78,
+        "usdt": 4594.70778,
         "kind": "earn"
       },
       {
@@ -1420,22 +1420,22 @@
       {
         "coin": "BTC",
         "amount": 0.0003656146,
-        "price": 82486.16,
-        "usdt": 30.158144,
+        "price": 82471.23,
+        "usdt": 30.152686,
         "kind": "spot"
       },
       {
         "coin": "BGB",
         "amount": 10.18732238,
-        "price": 1.8699,
-        "usdt": 19.049274,
+        "price": 1.8705,
+        "usdt": 19.055387,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 0.04714281,
-        "price": 104.76,
-        "usdt": 4.938681,
+        "price": 104.78,
+        "usdt": 4.939624,
         "kind": "spot"
       },
       {
@@ -1455,8 +1455,8 @@
       {
         "coin": "BGB",
         "amount": 0.0218526851640446,
-        "price": 1.8699,
-        "usdt": 0.040862,
+        "price": 1.8705,
+        "usdt": 0.040875,
         "kind": "spot"
       }
     ],
@@ -1467,9 +1467,9 @@
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": 141.347243,
-    "dailyChangePct": 0.710287,
-    "cumChangeUsdt": -868.452083,
-    "cumChangePct": -4.718725
+    "dailyChangeUsdt": 141.079082,
+    "dailyChangePct": 0.708939,
+    "cumChangeUsdt": -868.720244,
+    "cumChangePct": -4.720182
   }
 ]
