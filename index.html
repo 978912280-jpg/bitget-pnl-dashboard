@@ -253,7 +253,6 @@ function render(hist){
           </div>
         </div>
       </div>
-      <div class="pnl-summary" id="pnlSummary"></div>
       <div id="pnlCalendar"></div>
       <div class="chart" id="c_pnl" style="display:none"></div>
     </div>
@@ -313,16 +312,23 @@ function render(hist){
     return Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0]));
   }
 
+  // ISO 周号 → 日期范围（如 10.19-10.25）
+  function weekDateRange(year, week){
+    const jan4=new Date(year,0,4);
+    const jan4Dow=(jan4.getDay()+6)%7;
+    const w1Mon=new Date(jan4); w1Mon.setDate(jan4.getDate()-jan4Dow);
+    const mon=new Date(w1Mon); mon.setDate(w1Mon.getDate()+(week-1)*7);
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    const f=d=>(d.getMonth()+1)+'.'+d.getDate();
+    return f(mon)+'-'+f(sun);
+  }
+
   // 网格视图：日=月历，周/月/年=方块网格
   function renderGrid(){
     const period=pnlState.period;
     if(period==='day'){renderCalendar();return;}
     const data=aggPnl(period);
-    const total=data.reduce((s,x)=>s+x[1],0);
-    const pLabel={week:'周',month:'月',year:'年'}[period];
-    $('#pnlSummary').innerHTML=`按${pLabel}统计 · 累计 <b class="${total>=0?'pos':'neg'}">${signed(total)} USDT</b>（共 ${data.length} 个${pLabel}）`;
 
-    // 月视图固定显示1-12月（当前年份）
     let items=data;
     if(period==='month'){
       const y=pnlState.calYear;
@@ -332,14 +338,20 @@ function render(hist){
         const f=data.find(x=>x[0]===key);
         items.push([key,f?f[1]:null]);
       }
-      $('#pnlSummary').innerHTML=`${y}年 · 累计 <b class="${total>=0?'pos':'neg'}">${signed(total)} USDT</b>`;
     }
 
-    const cols=period==='month'?4:(period==='week'?3:2);
+    const cols=period==='month'?4:(period==='week'?2:2);
     let html='<div class="pnl-blocks" style="grid-template-columns:repeat('+cols+',1fr)">';
     items.forEach(([key,val])=>{
-      const label=period==='week'?key.replace(/^\d+-W/,'第')+'周':
-                  period==='month'?key.slice(5)+'月':key+'年';
+      let label;
+      if(period==='week'){
+        const parts=key.split('-W');
+        label=weekDateRange(parseInt(parts[0]),parseInt(parts[1]));
+      } else if(period==='month'){
+        label=key.slice(5)+'月';
+      } else {
+        label=key+'年';
+      }
       const cls=val==null?'zero':(val>0?'pos':(val<0?'neg':'zero'));
       const vstr=val==null?'—':(val===0?'0.0':signed(val));
       html+=`<div class="pnl-block ${cls}"><div class="pb-label">${label}</div><div class="pb-val">${vstr}</div></div>`;
@@ -357,9 +369,6 @@ function render(hist){
     const startDow=(first.getDay()+6)%7;
     const today=new Date();const todayStr=today.toISOString().slice(0,10);
     const prefix=y+'-'+String(m+1).padStart(2,'0');
-    const monthTotal=hist.filter(h=>h.date.startsWith(prefix)).reduce((s,h)=>s+(h.dailyChangeUsdt||0),0);
-    $('#pnlSummary').innerHTML=`截至 ${prefix} 的收益额 <b class="${monthTotal>=0?'pos':'neg'}">${signed(monthTotal)} USDT</b>`;
-
     const dows=['一','二','三','四','五','六','日'];
     let html='<div class="cal-nav"><button id="calPrev">‹</button><span>'+y+'-'+String(m+1).padStart(2,'0')+'</span><button id="calNext">›</button></div>';
     html+='<div class="cal-grid">'+dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
@@ -392,8 +401,6 @@ function render(hist){
     const labels=data.map(x=>x[0]);
     const vals=data.map(x=>Math.round(x[1]*100)/100);
     const total=vals.reduce((s,v)=>s+v,0);
-    const pLabel={day:'日',week:'周',month:'月',year:'年'}[pnlState.period];
-    $('#pnlSummary').innerHTML=`按${pLabel}统计 · 累计 <b class="${total>=0?'pos':'neg'}">${signed(total)} USDT</b>（共 ${data.length} 个${pLabel}）`;
     $('#pnlCalendar').style.display='none';
     $('#c_pnl').style.display='';
     const chart=echarts.getInstanceByDom($('#c_pnl'))||echarts.init($('#c_pnl'));
