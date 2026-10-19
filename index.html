@@ -328,20 +328,46 @@ function render(hist){
     const period=pnlState.period;
     if(period==='day'){renderCalendar();return;}
     const data=aggPnl(period);
+    let items=[], navLabel='', cols=2, showNav=false;
 
-    let items=data;
-    if(period==='month'){
+    if(period==='week'){
+      // 按月导航，显示该月涉及的所有周（周一至周日）
+      const y=pnlState.calYear, m=pnlState.calMonth;
+      navLabel=y+'-'+String(m+1).padStart(2,'0');
+      cols=2; showNav=true;
+      const monthStart=new Date(y,m,1);
+      const monthEnd=new Date(y,m+1,0);
+      const startDow=(monthStart.getDay()+6)%7;
+      const firstMonday=new Date(monthStart); firstMonday.setDate(monthStart.getDate()-startDow);
+      let cur=new Date(firstMonday);
+      while(cur<=monthEnd){
+        const onejan=new Date(cur.getFullYear(),0,1);
+        const wk=Math.ceil((((cur-onejan)/86400000)+onejan.getDay()+1)/7);
+        const key=cur.getFullYear()+'-W'+String(wk).padStart(2,'0');
+        const f=data.find(x=>x[0]===key);
+        items.push([key,f?f[1]:null]);
+        cur=new Date(cur); cur.setDate(cur.getDate()+7);
+      }
+    } else if(period==='month'){
+      // 按年导航，显示该年12个月
       const y=pnlState.calYear;
-      items=[];
+      navLabel=y+'年';
+      cols=4; showNav=true;
       for(let m=1;m<=12;m++){
         const key=y+'-'+String(m).padStart(2,'0');
         const f=data.find(x=>x[0]===key);
         items.push([key,f?f[1]:null]);
       }
+    } else {
+      cols=2;
+      items=data;
     }
 
-    const cols=period==='month'?4:(period==='week'?2:2);
-    let html='<div class="pnl-blocks" style="grid-template-columns:repeat('+cols+',1fr)">';
+    let navHtml='';
+    if(showNav){
+      navHtml='<div class="cal-nav"><button id="gridPrev">‹</button><span>'+navLabel+'</span><button id="gridNext">›</button></div>';
+    }
+    let html=navHtml+'<div class="pnl-blocks" style="grid-template-columns:repeat('+cols+',1fr)">';
     items.forEach(([key,val])=>{
       let label;
       if(period==='week'){
@@ -360,6 +386,18 @@ function render(hist){
     $('#pnlCalendar').innerHTML=html;
     $('#pnlCalendar').style.display='';
     $('#c_pnl').style.display='none';
+
+    const gp=$('#gridPrev'), gn=$('#gridNext');
+    if(gp)gp.onclick=()=>{
+      if(period==='week'){pnlState.calMonth--;if(pnlState.calMonth<0){pnlState.calMonth=11;pnlState.calYear--;}}
+      else if(period==='month'){pnlState.calYear--;}
+      renderGrid();
+    };
+    if(gn)gn.onclick=()=>{
+      if(period==='week'){pnlState.calMonth++;if(pnlState.calMonth>11){pnlState.calMonth=0;pnlState.calYear++;}}
+      else if(period==='month'){pnlState.calYear++;}
+      renderGrid();
+    };
   }
 
   function renderCalendar(){
