@@ -359,8 +359,17 @@ function render(hist){
         items.push([key,f?f[1]:null]);
       }
     } else {
-      cols=2;
-      items=data;
+      // 年：显示首个数据年到当前年+2，未来年份留空
+      cols=3;
+      const years=data.map(x=>parseInt(x[0]));
+      const minY=years.length?Math.min(...years):new Date().getFullYear();
+      const maxY=new Date().getFullYear()+2;
+      items=[];
+      for(let y=minY;y<=maxY;y++){
+        const key=String(y);
+        const f=data.find(x=>x[0]===key);
+        items.push([key,f?f[1]:null]);
+      }
     }
 
     let navHtml='';
