@@ -92,7 +92,6 @@
   .cal-cell .v{font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:600}
   .cal-cell.pos{background:rgba(52,211,153,0.14)}.cal-cell.pos .v{color:var(--pos)}
   .cal-cell.neg{background:rgba(248,113,113,0.14)}.cal-cell.neg .v{color:var(--neg)}
-  .cal-cell.empty{background:transparent;border:none}
   .cal-cell.today{border:1.5px solid var(--accent)}
   .cal-cell.future .d{opacity:.35}
   /* 周期方块网格（周/月/年） */
@@ -419,7 +418,6 @@ function render(hist){
     const dows=['一','二','三','四','五','六','日'];
     let html='<div class="cal-nav"><button id="calPrev">‹</button><span>'+y+'-'+String(m+1).padStart(2,'0')+'</span><button id="calNext">›</button></div>';
     html+='<div class="cal-grid">'+dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
-    for(let i=0;i<startDow;i++)html+='<div class="cal-cell empty"></div>';
     for(let day=1;day<=lastDay;day++){
       const ds=prefix+'-'+String(day).padStart(2,'0');
       const rec=hist.find(h=>h.date===ds);
@@ -431,7 +429,9 @@ function render(hist){
       if(isToday)cls+=' today';
       if(isFuture&&v==null)cls+=' future';
       const valStr=v!=null?(v>=0?'+':'')+fmt(v,1):(isFuture?'—':'0.0');
-      html+=`<div class="${cls}"><div class="d">${day}</div><div class="v">${valStr}</div></div>`;
+      // 1号用grid-column-start定位到正确星期列，其余自动流动，无需空白占位格
+      const colStyle=day===1?` style="grid-column-start:${startDow+1}"`:'';
+      html+=`<div class="${cls}"${colStyle}><div class="d">${day}</div><div class="v">${valStr}</div></div>`;
     }
     html+='</div>';
     $('#pnlCalendar').innerHTML=html;
