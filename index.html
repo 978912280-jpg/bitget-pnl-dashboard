@@ -94,10 +94,10 @@
 
   <footer>
     <span class="t">口径说明：</span>
-    ①「今日盈亏」= 今日总净值 − 上一快照总净值，<b class="pos" style="color:var(--neg)">包含当日充提与币价波动</b>；「总盈亏」为自首日起累计；<br>
+    ①「今日盈亏」= 今日总净值 − 上一快照总净值 − <b>当日净出入金</b>（入金/出金是本金变动，不计入盈亏）；「总盈亏」= 总净值变化 − 累计净出入金；<br>
     ②「行情盈亏」仅按各币当日涨跌幅 × 持仓市值估算，不含充提，作为市场驱动参考；<br>
     ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计；PoolX 等锁仓产品无公开 API，通过 data/poolx_manual.json 手动补充，结束日期过后自动失效（币回到现货后由接口自动统计）。<br>
-    ④ 当日净出入金通过 /api/v2/spot/wallet/deposit-records 与 withdrawal-records 统计今日成功的充提，按行情价折算 USDT；无充提或接口未授权时显示为 0。
+    ④ 当日净出入金通过 /api/v2/spot/wallet/deposit-records 与 withdrawal-records 统计今日成功的充提，按行情价折算 USDT；C2C 交易或内部划转（如转美股）需在 Actions 表单中手动记录，无出入金时显示为 0。
   </footer>
 </div>
 
@@ -149,8 +149,10 @@ function render(hist){
     {lab:'当日净出入金', val:signed(netFlow),
      cls:netFlow>0?'':(netFlow<0?'neg':'muted'),
      delta:'充入 '+fmt(dep)+' / 提出 '+fmt(wit)+(flowNote?' · '+flowNote:'')},
-    {lab:'现货 / 理财', val:fmt(spot), cls:'',
-     delta:'理财 '+fmt(earn)+' · 行情盈亏 '+signed(mp)},
+    {lab:'现货 (USDT)', val:fmt(spot), cls:'',
+     delta:'行情盈亏 '+signed(mp)},
+    {lab:'理财 (USDT)', val:fmt(earn), cls:'accent',
+     delta:'含 PoolX 锁仓 · 收益自动累积'},
   ];
   $('#kpis').innerHTML=k.map(x=>`
     <div class="kpi"><div class="lab">${x.lab}</div>
