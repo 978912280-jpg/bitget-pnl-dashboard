@@ -292,6 +292,15 @@ function render(hist){
   const pnlState={period:'day',view:'grid',calYear:0,calMonth:0};
   (()=>{const now=new Date();pnlState.calYear=now.getFullYear();pnlState.calMonth=now.getMonth();})();
 
+  // 标准 ISO 周号（基于周四归属法）
+  function getISOWeek(date){
+    const d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+    const dayNum=d.getUTCDay()||7;
+    d.setUTCDate(d.getUTCDate()+4-dayNum);
+    const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return {year:d.getUTCFullYear(),week:Math.ceil((((d-ys)/86400000)+1)/7)};
+  }
+
   function aggPnl(period){
     const g={};
     hist.forEach(h=>{
@@ -300,9 +309,8 @@ function render(hist){
       let key;
       if(period==='day')key=h.date;
       else if(period==='week'){
-        const onejan=new Date(d.getFullYear(),0,1);
-        const wk=Math.ceil((((d-onejan)/86400000)+onejan.getDay()+1)/7);
-        key=d.getFullYear()+'-W'+String(wk).padStart(2,'0');
+        const iso=getISOWeek(d);
+        key=iso.year+'-W'+String(iso.week).padStart(2,'0');
       }
       else if(period==='month')key=h.date.slice(0,7);
       else key=String(d.getFullYear());
@@ -313,12 +321,12 @@ function render(hist){
 
   // ISO 周号 → 日期范围（如 10.19-10.25）
   function weekDateRange(year, week){
-    const jan4=new Date(year,0,4);
-    const jan4Dow=(jan4.getDay()+6)%7;
-    const w1Mon=new Date(jan4); w1Mon.setDate(jan4.getDate()-jan4Dow);
-    const mon=new Date(w1Mon); mon.setDate(w1Mon.getDate()+(week-1)*7);
-    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
-    const f=d=>(d.getMonth()+1)+'.'+d.getDate();
+    const jan4=new Date(Date.UTC(year,0,4));
+    const jan4Dow=(jan4.getUTCDay()+6)%7;
+    const w1Mon=new Date(jan4); w1Mon.setUTCDate(jan4.getUTCDate()-jan4Dow);
+    const mon=new Date(w1Mon); mon.setUTCDate(w1Mon.getUTCDate()+(week-1)*7);
+    const sun=new Date(mon); sun.setUTCDate(mon.getUTCDate()+6);
+    const f=d=>(d.getUTCMonth()+1)+'.'+d.getUTCDate();
     return f(mon)+'-'+f(sun);
   }
 
@@ -340,9 +348,8 @@ function render(hist){
       const firstMonday=new Date(monthStart); firstMonday.setDate(monthStart.getDate()-startDow);
       let cur=new Date(firstMonday);
       while(cur<=monthEnd){
-        const onejan=new Date(cur.getFullYear(),0,1);
-        const wk=Math.ceil((((cur-onejan)/86400000)+onejan.getDay()+1)/7);
-        const key=cur.getFullYear()+'-W'+String(wk).padStart(2,'0');
+        const iso=getISOWeek(cur);
+        const key=iso.year+'-W'+String(iso.week).padStart(2,'0');
         const f=data.find(x=>x[0]===key);
         items.push([key,f?f[1]:null]);
         cur=new Date(cur); cur.setDate(cur.getDate()+7);
