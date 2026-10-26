@@ -2019,5 +2019,94 @@
     "dailyChangePct": 0.013222,
     "cumChangeUsdt": -1069.975447,
     "cumChangePct": -5.8137
+  },
+  {
+    "date": "2026-10-26",
+    "ts": 1792988459081,
+    "totalUsdt": 18681.134109,
+    "spotUsdt": 32.77594,
+    "earnUsdt": 18648.358169,
+    "marketPnlUsdt": -0.489682,
+    "depositUsdt": 0.0,
+    "withdrawUsdt": 1005.0,
+    "netFlowUsdt": -1005.0,
+    "flowNote": "",
+    "coinCount": 5,
+    "byCoin": [
+      {
+        "coin": "USDGO",
+        "amount": 7719.00705298,
+        "price": 1.0012,
+        "usdt": 7728.269861,
+        "kind": "earn"
+      },
+      {
+        "coin": "BTC",
+        "amount": 0.07919073,
+        "price": 79926.0,
+        "usdt": 6329.398286,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 43.851,
+        "price": 100.69,
+        "usdt": 4415.35719,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDT",
+        "amount": 175.3328319,
+        "price": 1.0,
+        "usdt": 175.332832,
+        "kind": "earn"
+      },
+      {
+        "coin": "BGB",
+        "amount": 10.151080858235522,
+        "price": 1.8509,
+        "usdt": 18.788636,
+        "kind": "spot"
+      },
+      {
+        "coin": "SOL",
+        "amount": 0.08380944,
+        "price": 100.69,
+        "usdt": 8.438773,
+        "kind": "spot"
+      },
+      {
+        "coin": "BTC",
+        "amount": 6.29101e-05,
+        "price": 79926.0,
+        "usdt": 5.028153,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.43062269782,
+        "price": 1.0,
+        "usdt": 0.430623,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDGO",
+        "amount": 0.08964858,
+        "price": 1.0012,
+        "usdt": 0.089756,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "poolx": {},
+    "manualFlow": {
+      "outflow_usdt": 1005.0,
+      "inflow_usdt": 0.0,
+      "note": ""
+    },
+    "dailyChangeUsdt": -153.7106,
+    "dailyChangePct": -0.774757,
+    "cumChangeUsdt": -1223.686047,
+    "cumChangePct": -6.648885
   }
 ]
