@@ -3060,11 +3060,11 @@
   },
   {
     "date": "2026-11-06",
-    "ts": 1793933507905,
-    "totalUsdt": 16206.632883,
-    "spotUsdt": 49.758808,
-    "earnUsdt": 16156.874075,
-    "marketPnlUsdt": 0.646946,
+    "ts": 1793946592576,
+    "totalUsdt": 16129.398507,
+    "spotUsdt": 49.77464,
+    "earnUsdt": 16079.623867,
+    "marketPnlUsdt": -0.135471,
     "depositUsdt": 0.0,
     "withdrawUsdt": 1300.0,
     "netFlowUsdt": -1300.0,
@@ -3074,8 +3074,8 @@
       {
         "coin": "BTC",
         "amount": 0.08211403,
-        "price": 76251.25,
-        "usdt": 6261.29743,
+        "price": 75673.62,
+        "usdt": 6213.865903,
         "kind": "earn"
       },
       {
@@ -3088,8 +3088,8 @@
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 90.49,
-        "usdt": 3968.07699,
+        "price": 89.81,
+        "usdt": 3938.25831,
         "kind": "earn"
       },
       {
@@ -3102,36 +3102,36 @@
       {
         "coin": "BGB",
         "amount": 12.562081890509695,
-        "price": 1.7283,
-        "usdt": 21.711046,
+        "price": 1.7173,
+        "usdt": 21.572863,
         "kind": "spot"
       },
       {
         "coin": "SOL",
         "amount": 0.14145095,
-        "price": 90.49,
-        "usdt": 12.799896,
+        "price": 89.81,
+        "usdt": 12.70371,
         "kind": "spot"
       },
       {
         "coin": "BTC",
-        "amount": 0.0001325011,
-        "price": 76251.25,
-        "usdt": 10.103375,
+        "amount": 0.0001328759,
+        "price": 75673.62,
+        "usdt": 10.0552,
         "kind": "spot"
       },
       {
         "coin": "USDC",
-        "amount": 5.13788464,
+        "amount": 5.42339192,
         "price": 1.0,
-        "usdt": 5.137885,
+        "usdt": 5.423392,
         "kind": "spot"
       },
       {
         "coin": "USDT",
-        "amount": 0.00660631,
+        "amount": 0.01947446,
         "price": 1.0,
-        "usdt": 0.006606,
+        "usdt": 0.019474,
         "kind": "spot"
       }
     ],
@@ -3142,9 +3142,9 @@
       "inflow_usdt": 0.0,
       "note": "1000 提现，300 入美股"
     },
-    "dailyChangeUsdt": -611.234443,
-    "dailyChangePct": -3.373656,
-    "cumChangeUsdt": -1946.867273,
-    "cumChangePct": -10.578282
+    "dailyChangeUsdt": -688.468819,
+    "dailyChangePct": -3.799944,
+    "cumChangeUsdt": -2024.101649,
+    "cumChangePct": -10.997934
   }
 ]
