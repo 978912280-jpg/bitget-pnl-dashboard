@@ -16,6 +16,7 @@
     --accent:#f0b429; --spot:#4f8cff; --earn:#f0b429;
     --pos:#34d399; --neg:#f87171;
     --card:var(--panel); --border:var(--line);
+    --flow-out:#f0b429;   /* 出金/负净额：蓝色的对比色（暖橙），与盈亏红绿区分开 */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);
@@ -92,7 +93,7 @@
   .cal-cell .d{font-size:12px;font-weight:600;color:var(--muted)}
   .cal-cell .f{font-size:9.5px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:700;line-height:1.2}
   .cal-cell .f.in{color:var(--spot)}
-  .cal-cell .f.out{color:var(--neg)}
+  .cal-cell .f.out{color:var(--flow-out)}
   .cal-cell .v{font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:600}
   .cal-cell.pos{background:rgba(52,211,153,0.14)}.cal-cell.pos .v{color:var(--pos)}
   .cal-cell.neg{background:rgba(248,113,113,0.14)}.cal-cell.neg .v{color:var(--neg)}
@@ -118,7 +119,7 @@
   .pnl-block .pb-label{font-size:12px;color:var(--muted);font-weight:500}
   .pnl-block .pb-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
   .pnl-block .pb-flow{font-size:11px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
-  .pnl-block .pb-flow.pos{color:var(--spot)} .pnl-block .pb-flow.neg{color:var(--neg)}
+  .pnl-block .pb-flow.pos{color:var(--spot)} .pnl-block .pb-flow.neg{color:var(--flow-out)}
   .pnl-block.pos{background:rgba(52,211,153,0.14)}.pnl-block.pos .pb-val{color:var(--pos)}
   .pnl-block.neg{background:rgba(248,113,113,0.14)}.pnl-block.neg .pb-val{color:var(--neg)}
   .pnl-block.zero .pb-val{color:var(--faint)}
