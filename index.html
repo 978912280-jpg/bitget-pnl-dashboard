@@ -27,7 +27,7 @@
   h1 .dot{color:var(--accent)}
   .sub{color:var(--muted);font-size:13px;margin-top:6px}
   .update{color:var(--faint);font-size:12px;white-space:nowrap}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
   .kpi .lab{color:var(--muted);font-size:12px;margin-bottom:8px}
   .kpi .val{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px}
@@ -132,10 +132,11 @@
 
   <footer>
     <span class="t">口径说明：</span>
-    ①「今日盈亏」= 今日总净值 − 上一快照总净值 − <b>当日净出入金</b>（入金/出金是本金变动，不计入盈亏）；「总盈亏」= 总净值变化 − 累计净出入金；<br>
-    ②「行情盈亏」仅按各币当日涨跌幅 × 持仓市值估算，不含充提，作为市场驱动参考；<br>
-    ③ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计；PoolX 等锁仓产品无公开 API，通过 data/poolx_manual.json 手动补充，结束日期过后自动失效（币回到现货后由接口自动统计）。<br>
-    ④ 当日净出入金通过 /api/v2/spot/wallet/deposit-records 与 withdrawal-records 统计今日成功的充提，按行情价折算 USDT；C2C 交易或内部划转（如转美股）需在 Actions 表单中手动记录，无出入金时显示为 0。
+    ①「今日盈亏」= 今日总净值 − 上一快照总净值 − <b>当日净出入金</b>（入金/出金是本金变动，不计入盈亏）；「总盈亏」= 总净值变化 − 累计净出入金（以建仓首日为基准）；<br>
+    ②「净入金总额」= 历史本金底座（data/net_deposit.json）+ 全部已记录出入金之和；「真实总盈亏」= 当前总资产 − 净入金总额，衡量全部本金累计赚了多少；<br>
+    ③「行情盈亏」仅按各币当日涨跌幅 × 持仓市值估算，不含充提，作为市场驱动参考；<br>
+    ④ 理财(Earn)持仓通过 /api/v2/earn/savings/assets（或 account/assets）纳入统计；PoolX 等锁仓产品无公开 API，通过 data/poolx_manual.json 手动补充，结束日期过后自动失效（币回到现货后由接口自动统计）。<br>
+    ⑤ 当日净出入金通过 /api/v2/spot/wallet/deposit-records 与 withdrawal-records 统计今日成功的充提，按行情价折算 USDT；C2C 交易或内部划转（如转美股）需在 data/manual_flow.json 中手动记录，无出入金时显示为 0。
   </footer>
 </div>
 
@@ -154,12 +155,18 @@ const fmtAmt=v=>{v=Number(v||0);
 const coinColor=c=>{let h=0;for(let i=0;i<c.length;i++)h=(h*31+c.charCodeAt(i))%360;return `hsl(${h},62%,58%)`};
 const COIN_FULL={BTC:'Bitcoin',ETH:'Ethereum',SOL:'Solana',USDT:'Tether',USDC:'USD Coin',BGB:'Bitget Token',USDGO:'USDGO',XRP:'Ripple',DOGE:'Dogecoin',ADA:'Cardano',AVAX:'Avalanche',LINK:'Chainlink',DOT:'Polkadot',LTC:'Litecoin',TRX:'Tron',ATOM:'Cosmos',UNI:'Uniswap',NEAR:'NEAR Protocol',APT:'Aptos',ARB:'Arbitrum',OP:'Optimism',FIL:'Filecoin',SUI:'Sui',TON:'Toncoin',PEPE:'Pepe',WIF:'dogwifcoin',FLOKI:'FLOKI',BONK:'Bonk',JUP:'Jupiter',TIA:'Celestia',INJ:'Injective',SEI:'Sei',RNDR:'Render',FET:'Fetch.ai',AAVE:'Aave',MKR:'Maker',COMP:'Compound',CRV:'Curve',SNX:'Synthetix',GRT:'The Graph','1INCH':'1inch',ENJ:'Enjin',MANA:'Decentraland',SAND:'The Sandbox',AXS:'Axie Infinity',ICP:'Internet Computer',VET:'VeChain',EOS:'EOS',XTZ:'Tezos',ALGO:'Algorand',NEO:'Neo',ONT:'Ontology',ZIL:'Zilliqa',ONE:'Harmony',ROSE:'Oasis Network',KAVA:'Kava',RUNE:'THORChain',ATOM2:'Cosmos',LUNA:'Terra',LUNC:'Terra Classic',USTC:'TerraClassicUSD',FTM:'Fantom',CELO:'Celo',YFI:'yearn.finance',BAL:'Balancer',CRV2:'Curve',CVX:'Convex Finance',FXS:'Frax Share',DYDX:'dYdX',GMX:'GMX',RDNT:'Radiant Capital',PENDLE:'Pendle',LDO:'Lido DAO',RPL:'Rocket Pool',FRAX:'Frax',DAI:'Dai',WBTC:'Wrapped BTC',WETH:'Wrapped ETH',STETH:'Lido Staked ETH',CBETH:'Coinbase Wrapped BTC',RETH:'Rocket Pool ETH',SFRXETH:'Staked Frax Ether'};
 
+let depositBase=0;
 async function load(){
   let hist=[];
   try{
     const r=await fetch('data/history.json?t='+Date.now());
     hist=await r.json();
   }catch(e){ /* fetch 失败（如本地 file:// 打开）按空数据处理 */ }
+  try{
+    const r2=await fetch('data/net_deposit.json?t='+Date.now());
+    const cfg=await r2.json();
+    depositBase=Number(cfg.base_usdt||0);
+  }catch(e){ depositBase=0; }
   if(!Array.isArray(hist))hist=[];
   render(hist);
 }
@@ -175,15 +182,24 @@ function render(hist){
   const wit=latest.withdrawUsdt!=null?latest.withdrawUsdt:0;
   const netFlow=latest.netFlowUsdt!=null?latest.netFlowUsdt:(dep-wit);
   const flowNote=latest.flowNote||'';
+  // 净入金总额 = 本金底座 + 累计净出入金（优先用脚本写入值，回退到本地推算）
+  let cumFlow=0; hist.forEach(h=>{cumFlow+=(h.netFlowUsdt||0)});
+  const netDeposit=latest.netDepositUsdt!=null?latest.netDepositUsdt:(depositBase+cumFlow);
+  const realPnl=latest.realPnlUsdt!=null?latest.realPnlUsdt:(latest.totalUsdt-netDeposit);
+  const realPnlPct=(latest.realPnlPct!=null)?latest.realPnlPct:(netDeposit?(realPnl/netDeposit*100):0);
 
   $('#update').textContent='数据截至 '+latest.date+' '+new Date(latest.ts).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
 
   const k=[
     {lab:'总资产 (USDT)', val:fmt(latest.totalUsdt), cls:'accent', delta:'币种 '+latest.coinCount+' 种 · 现货+理财'},
+    {lab:'净入金总额', val:fmt(netDeposit), cls:'',
+     delta:'历史本金底座 + 累计出入金'},
+    {lab:'真实总盈亏', val:signed(realPnl), cls:colorOf(realPnl),
+     delta:'总资产 − 净入金 '+pct(realPnlPct)},
     {lab:'今日盈亏', val:signed(daily), cls:colorOf(daily),
      delta:'较上一快照 '+pct(latest.dailyChangePct)},
     {lab:'总盈亏', val:signed(cum), cls:colorOf(cum),
-     delta:'自首日 '+pct(latest.cumChangePct)},
+     delta:'自建仓首日 '+pct(latest.cumChangePct)},
     {lab:'当日净出入金', val:signed(netFlow),
      cls:netFlow>0?'':(netFlow<0?'neg':'muted'),
      delta:'充入 '+fmt(dep)+' / 提出 '+fmt(wit)+(flowNote?' · '+flowNote:'')},

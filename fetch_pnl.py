@@ -260,6 +260,86 @@ def load_history() -> list:
 
 POOLX_FILE = ROOT / "data" / "poolx_manual.json"
 MANUAL_FLOW_FILE = ROOT / "data" / "manual_flow.json"
+NET_DEPOSIT_FILE = ROOT / "data" / "net_deposit.json"
+
+
+def load_net_deposit() -> float:
+    """读取历史本金底座（首日快照之前已投入的净入金）。"""
+    if not NET_DEPOSIT_FILE.exists():
+        return 0.0
+    try:
+        raw = json.loads(NET_DEPOSIT_FILE.read_text("utf-8"))
+        return float(raw.get("base_usdt", 0) or 0)
+    except Exception as exc:
+        print(f"[warn] 读取 {NET_DEPOSIT_FILE.name} 失败：{exc}")
+        return 0.0
+
+
+def load_all_manual_flow() -> dict:
+    """读取 manual_flow.json 全部日期的记录，用于回补历史改动。"""
+    if not MANUAL_FLOW_FILE.exists():
+        return {}
+    try:
+        raw = json.loads(MANUAL_FLOW_FILE.read_text("utf-8"))
+    except Exception:
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def reconcile_manual_flows(history: list, manual_all: dict) -> bool:
+    """
+    把 manual_flow.json 的最新值回补到历史快照：
+    先剥离旧的手动部分还原接口原始充提，再叠加当前手动值，避免重复计算。
+    """
+    changed = False
+    for h in history:
+        d = h.get("date")
+        if d not in manual_all:
+            continue
+        entry = manual_all[d] if isinstance(manual_all[d], dict) else {}
+        mf_old = h.get("manualFlow") or {}
+        old_in = float(mf_old.get("inflow_usdt", 0) or 0)
+        old_out = float(mf_old.get("outflow_usdt", 0) or 0)
+        new_in = float(entry.get("inflow_usdt", 0) or 0)
+        new_out = float(entry.get("outflow_usdt", 0) or 0)
+        if abs(new_in - old_in) < 1e-9 and abs(new_out - old_out) < 1e-9:
+            continue
+        # 剥离旧手动值，得到接口原始充提
+        api_dep = max(0.0, float(h.get("depositUsdt") or 0) - old_in)
+        api_wit = max(0.0, float(h.get("withdrawUsdt") or 0) - old_out)
+        h["depositUsdt"] = round(api_dep + new_in, 6)
+        h["withdrawUsdt"] = round(api_wit + new_out, 6)
+        h["netFlowUsdt"] = round(h["depositUsdt"] - h["withdrawUsdt"], 6)
+        h["manualFlow"] = {
+            "inflow_usdt": new_in,
+            "outflow_usdt": new_out,
+            "note": str(entry.get("note", "") or ""),
+        }
+        print(f"      [info] 回补 {d} 手动出入金：入 {new_in:.2f} / 出 {new_out:.2f}")
+        changed = True
+    return changed
+
+
+def recompute_pnl(history: list) -> None:
+    """按最新净出入金重算全部快照的日盈亏与累计盈亏。"""
+    if not history:
+        return
+    base = history[0]
+    cum_flow = 0.0
+    for i, h in enumerate(history):
+        if i == 0:
+            h["dailyChangeUsdt"] = 0.0
+            h["dailyChangePct"] = 0.0
+        else:
+            prev = history[i - 1]
+            net = h.get("netFlowUsdt", 0) or 0
+            cum_flow += net
+            daily = h["totalUsdt"] - prev["totalUsdt"] - net
+            h["dailyChangeUsdt"] = round(daily, 6)
+            h["dailyChangePct"] = round(daily / prev["totalUsdt"] * 100, 6) if prev["totalUsdt"] else 0.0
+        cum = h["totalUsdt"] - base["totalUsdt"] - cum_flow
+        h["cumChangeUsdt"] = round(cum, 6)
+        h["cumChangePct"] = round(cum / base["totalUsdt"] * 100, 6) if base["totalUsdt"] else 0.0
 
 
 def load_manual_flow(today: str) -> dict:
@@ -434,6 +514,10 @@ def send_bark(snap: dict):
     if mf_str:
         body_lines.append(mf_str)
     body_lines.append(f"现货: {spot:,.2f} / 理财: {earn:,.2f}")
+    net_dep = snap.get("netDepositUsdt")
+    real_pnl = snap.get("realPnlUsdt")
+    if net_dep is not None and real_pnl is not None:
+        body_lines.append(f"净入金: {net_dep:,.2f} / 真实总盈亏: {real_pnl:+,.2f} ({snap.get('realPnlPct',0):+.2f}%)")
     body_lines.append(f"PoolX: {poolx_str}")
     body = "\n".join(body_lines)
     payload = {
@@ -529,21 +613,19 @@ def main():
     if not replaced:
         history.append(snap)
 
-    if len(history) >= 2:
-        prev, cur = history[-2], history[-1]
-        # 今日盈亏 = 总资产变化 - 今日净出入金（入金/出金是本金变动，不是盈亏）
-        net_flow = cur.get("netFlowUsdt", 0) or 0
-        daily = cur["totalUsdt"] - prev["totalUsdt"] - net_flow
-        cur["dailyChangeUsdt"] = round(daily, 6)
-        cur["dailyChangePct"] = round(daily / prev["totalUsdt"] * 100, 6) if prev["totalUsdt"] else 0.0
-    base = history[0]
-    # 总盈亏 = 总资产变化 - 累计净出入金（从第2天起累加，首日为基准）
-    cum_net_flow = sum(h.get("netFlowUsdt", 0) or 0 for h in history[1:])
-    cum = snap["totalUsdt"] - base["totalUsdt"] - cum_net_flow
-    snap["cumChangeUsdt"] = round(cum, 6)
-    snap["cumChangePct"] = round(cum / base["totalUsdt"] * 100, 6) if base["totalUsdt"] else 0.0
-    if replaced:
-        history[-1].update(snap)
+    # 回补 manual_flow.json 中改动过的历史记录，再统一重算日/累计盈亏
+    if reconcile_manual_flows(history, load_all_manual_flow()):
+        print("      [info] 历史出入金已按 manual_flow.json 最新值重算")
+    recompute_pnl(history)
+
+    # 净入金总额 = 历史本金底座 + 全部已记录净出入金之和
+    base_capital = load_net_deposit()
+    total_net_flow = sum(h.get("netFlowUsdt", 0) or 0 for h in history)
+    snap["netDepositUsdt"] = round(base_capital + total_net_flow, 6)
+    # 真实总盈亏 = 当前总资产 − 净入金总额（衡量全部本金赚了多少）
+    snap["realPnlUsdt"] = round(snap["totalUsdt"] - snap["netDepositUsdt"], 6)
+    snap["realPnlPct"] = round(snap["realPnlUsdt"] / snap["netDepositUsdt"] * 100, 6) if snap["netDepositUsdt"] else 0.0
+    history[-1].update(snap)
 
     save_history(history)
     print("[5/5] 已写入 data/history.json")
@@ -552,7 +634,9 @@ def main():
     print(f"      现货        : {snap['spotUsdt']:,.4f}")
     print(f"      理财        : {snap['earnUsdt']:,.4f}")
     print(f"      日净值变化  : {snap.get('dailyChangeUsdt', 0):+,.4f}")
-    print(f"      累计变化    : {snap['cumChangeUsdt']:+,.4f}（自 {base['date']}）")
+    print(f"      累计变化    : {snap['cumChangeUsdt']:+,.4f}（自 {history[0]['date']}）")
+    print(f"      净入金总额  : {snap['netDepositUsdt']:,.4f}")
+    print(f"      真实总盈亏  : {snap['realPnlUsdt']:+,.4f}（{snap['realPnlPct']:+.2f}%）")
     # Bark 推送已移至工作流的 Pages 部署之后，确保通知到达时页面已更新
     # send_bark(snap)
 
