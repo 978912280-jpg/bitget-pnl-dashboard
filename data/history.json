@@ -3243,11 +3243,11 @@
   },
   {
     "date": "2026-11-08",
-    "ts": 1794073879527,
-    "totalUsdt": 16146.234442,
-    "spotUsdt": 53.203387,
-    "earnUsdt": 16093.031056,
-    "marketPnlUsdt": -0.15436,
+    "ts": 1794074049047,
+    "totalUsdt": 16146.235266,
+    "spotUsdt": 53.203388,
+    "earnUsdt": 16093.031878,
+    "marketPnlUsdt": -0.159113,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -3257,8 +3257,8 @@
       {
         "coin": "BTC",
         "amount": 0.08224803,
-        "price": 75855.31,
-        "usdt": 6238.949813,
+        "price": 75855.32,
+        "usdt": 6238.950635,
         "kind": "earn"
       },
       {
@@ -3299,8 +3299,8 @@
       {
         "coin": "BTC",
         "amount": 0.0001331575,
-        "price": 75855.31,
-        "usdt": 10.100703,
+        "price": 75855.32,
+        "usdt": 10.100705,
         "kind": "spot"
       },
       {
@@ -3325,12 +3325,12 @@
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": -26.739535,
-    "dailyChangePct": -0.165335,
-    "cumChangeUsdt": -2007.265714,
-    "cumChangePct": -10.906456,
+    "dailyChangeUsdt": -26.738711,
+    "dailyChangePct": -0.16533,
+    "cumChangeUsdt": -2007.26489,
+    "cumChangePct": -10.906452,
     "netDepositUsdt": 15365.0,
-    "realPnlUsdt": 781.234442,
-    "realPnlPct": 5.084507
+    "realPnlUsdt": 781.235266,
+    "realPnlPct": 5.084512
   }
 ]
