@@ -1,10 +1,14 @@
 name: 每日资产统计与 Pages 部署
 
-# 每天 UTC 16:10（北京时间次日 00:10）自动抓取一次；push 到 main 时自动重新部署 Pages；也支持手动触发。
-# 手动触发时可选择性填写 PoolX 字段或内部划转字段，实现表单式更新（无需改 JSON）。
+# 目标：北京时间每日 00:10（UTC 16:10）更新。GitHub 定时任务高峰期会延迟数十分钟，
+# 因此配置三个兜底时间点（00:10 / 00:35 / 01:10 北京），谁先跑成谁写当日快照；
+# 后续重复运行只刷新数据、不重复推送 Bark，避免通知轰炸。
+# push 到 main 时自动重新部署 Pages；也支持手动触发（手动触发总是推送）。
 on:
   schedule:
     - cron: "10 16 * * *"
+    - cron: "35 16 * * *"
+    - cron: "10 17 * * *"
   push:
     branches: [main]
   workflow_dispatch:
@@ -154,6 +158,20 @@ jobs:
                 + (f"（{note}）" if note else ""))
           PY
 
+      # 判断当日是否已有快照：用于后续 Bark 去重（重复兜底运行不再重复推送）
+      - name: 判断今日是否已有快照
+        id: dup
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+          today = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")
+          hist = json.loads(Path("data/history.json").read_text()) if Path("data/history.json").exists() else []
+          exists = any(h.get("date") == today for h in hist)
+          print(f"exists={'true' if exists else 'false'}")
+          PY
+
       # 密钥全部来自仓库 Secrets，不进入代码仓库
       - name: 抓取资产与盈亏
         env:
@@ -187,7 +205,8 @@ jobs:
 
       # Pages 部署完成后再发 Bark，确保用户点通知时仪表盘已是最新数据
       - name: Bark 推送资产日报
-        if: always()
+        # 手动触发总是推送；定时/推送触发时若今日快照已存在则跳过，避免多次兜底运行重复通知
+        if: always() && (github.event_name == 'workflow_dispatch' || steps.dup.outputs.exists != 'true')
         env:
           BARK_KEY: ${{ secrets.BARK_KEY }}
         run: |
@@ -225,6 +244,11 @@ jobs:
           ]
           if mf_out > 0 or mf_in > 0:
               lines.append(f"手动出入金: 出 {mf_out:.2f} / 入 {mf_in:.2f}" + (f"（{mf_note}）" if mf_note else ""))
+          net_dep = snap.get("netDepositUsdt")
+          real_pnl = snap.get("realPnlUsdt")
+          if net_dep is not None and real_pnl is not None:
+              pct = snap.get("realPnlPct", 0) or 0
+              lines.append(f"净入金: {net_dep:,.2f} / 真实总盈亏: {real_pnl:+,.2f} ({pct:+.2f}%)")
           lines.append(f"现货: {spot:,.2f} / 理财: {earn:,.2f}")
           lines.append(f"PoolX: {poolx_str}")
           body = "\n".join(lines)
