@@ -3151,11 +3151,11 @@
   },
   {
     "date": "2026-11-07",
-    "ts": 1794030605654,
-    "totalUsdt": 16179.311474,
-    "spotUsdt": 52.282498,
-    "earnUsdt": 16127.028976,
-    "marketPnlUsdt": 0.181061,
+    "ts": 1794051555834,
+    "totalUsdt": 16172.973977,
+    "spotUsdt": 52.97242,
+    "earnUsdt": 16120.001557,
+    "marketPnlUsdt": 0.112677,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -3165,8 +3165,8 @@
       {
         "coin": "BTC",
         "amount": 0.08224803,
-        "price": 76034.08,
-        "usdt": 6253.653293,
+        "price": 76023.28,
+        "usdt": 6252.765014,
         "kind": "earn"
       },
       {
@@ -3179,8 +3179,8 @@
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 90.21,
-        "usdt": 3955.79871,
+        "price": 90.07,
+        "usdt": 3949.65957,
         "kind": "earn"
       },
       {
@@ -3193,36 +3193,36 @@
       {
         "coin": "BGB",
         "amount": 12.557502702409304,
-        "price": 1.7419,
-        "usdt": 21.873914,
+        "price": 1.7596,
+        "usdt": 22.096182,
         "kind": "spot"
       },
       {
         "coin": "SOL",
         "amount": 0.14668904,
-        "price": 90.21,
-        "usdt": 13.232818,
+        "price": 90.07,
+        "usdt": 13.212282,
         "kind": "spot"
       },
       {
         "coin": "BTC",
-        "amount": 0.0001320319,
-        "price": 76034.08,
-        "usdt": 10.038924,
+        "amount": 0.0001325947,
+        "price": 76023.28,
+        "usdt": 10.080284,
         "kind": "spot"
       },
       {
         "coin": "USDC",
-        "amount": 7.06505878,
+        "amount": 7.4933197,
         "price": 1.0,
-        "usdt": 7.065059,
+        "usdt": 7.49332,
         "kind": "spot"
       },
       {
         "coin": "USDT",
-        "amount": 0.07178261,
+        "amount": 0.09035225,
         "price": 1.0,
-        "usdt": 0.071783,
+        "usdt": 0.090352,
         "kind": "spot"
       }
     ],
@@ -3233,12 +3233,12 @@
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": 49.912967,
-    "dailyChangePct": 0.309453,
-    "cumChangeUsdt": -1974.188682,
-    "cumChangePct": -10.726733,
+    "dailyChangeUsdt": 43.57547,
+    "dailyChangePct": 0.270162,
+    "cumChangeUsdt": -1980.526179,
+    "cumChangePct": -10.761168,
     "netDepositUsdt": 15365.0,
-    "realPnlUsdt": 814.311474,
-    "realPnlPct": 5.299782
+    "realPnlUsdt": 807.973977,
+    "realPnlPct": 5.258535
   }
 ]
