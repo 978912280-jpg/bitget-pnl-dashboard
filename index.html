@@ -306,7 +306,12 @@ function render(hist){
 
   // —— 盈亏统计模块（网格/柱状图 + 日/周/月/年切换）——
   const pnlState={period:'day',view:'grid',calYear:0,calMonth:0};
-  (()=>{const now=new Date();pnlState.calYear=now.getFullYear();pnlState.calMonth=now.getMonth();})();
+  // 北京时间日期（UTC+8，无夏令时）。快照按北京日期归档，页面必须用同一口径判断“今天”
+  function bjDateStr(d){
+    const t=new Date((d?d.getTime():Date.now())+8*3600*1000);
+    return t.toISOString().slice(0,10);
+  }
+  (()=>{const t=new Date(Date.now()+8*3600*1000);pnlState.calYear=t.getUTCFullYear();pnlState.calMonth=t.getUTCMonth();})();
 
   // 标准 ISO 周号（基于周四归属法）
   function getISOWeek(date){
@@ -436,7 +441,7 @@ function render(hist){
     const first=new Date(y,m,1);
     const lastDay=new Date(y,m+1,0).getDate();
     const startDow=(first.getDay()+6)%7;
-    const today=new Date();const todayStr=today.toISOString().slice(0,10);
+    const todayStr=bjDateStr();   // 按北京时间取“今天”，避免 UTC+8 导致凌晨误判为昨天
     const prefix=y+'-'+String(m+1).padStart(2,'0');
     const dows=['一','二','三','四','五','六','日'];
     let html='<div class="cal-nav"><button id="calPrev">‹</button><span>'+y+'-'+String(m+1).padStart(2,'0')+'</span><button id="calNext">›</button></div>';
@@ -446,7 +451,7 @@ function render(hist){
       const rec=hist.find(h=>h.date===ds);
       const v=rec?rec.dailyChangeUsdt:null;
       const isToday=ds===todayStr;
-      const isFuture=new Date(ds)>today;
+      const isFuture=ds>todayStr;
       let cls='cal-cell';
       if(v!=null)cls+=v>=0?' pos':' neg';
       if(isToday)cls+=' today';
