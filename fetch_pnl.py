@@ -321,7 +321,7 @@ def reconcile_manual_flows(history: list, manual_all: dict) -> bool:
 
 
 def recompute_pnl(history: list) -> None:
-    """按最新净出入金重算全部快照的日盈亏与累计盈亏。"""
+    """按最新净出入金重算全部快照的日盈亏与累计盈亏，并同步净入金/真实盈亏。"""
     if not history:
         return
     base = history[0]
@@ -340,6 +340,20 @@ def recompute_pnl(history: list) -> None:
         cum = h["totalUsdt"] - base["totalUsdt"] - cum_flow
         h["cumChangeUsdt"] = round(cum, 6)
         h["cumChangePct"] = round(cum / base["totalUsdt"] * 100, 6) if base["totalUsdt"] else 0.0
+
+    # 净入金/真实盈亏：按“本金底座 + 截至该日的全部净出入金”逐日回算，
+    # 保证早于机制上线日期（无该字段）的快照也能显示正确口径。
+    # 用快照里的 netFlowUsdt（已含接口充提与手动划转），避免只算手动部分漏账。
+    deposit_base = load_net_deposit()
+    if deposit_base:
+        dep_cum = 0.0
+        for h in history:
+            dep_cum += float(h.get("netFlowUsdt", 0) or 0)
+            net_dep = deposit_base + dep_cum
+            real = (h.get("totalUsdt", 0) or 0) - net_dep
+            h["netDepositUsdt"] = round(net_dep, 6)
+            h["realPnlUsdt"] = round(real, 6)
+            h["realPnlPct"] = round(real / net_dep * 100, 6) if net_dep else 0.0
 
 
 def load_manual_flow(today: str) -> dict:

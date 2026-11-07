@@ -175,6 +175,8 @@ jobs:
           mkdir -p _site/data
           cp index.html _site/
           cp data/history.json _site/data/
+          # 页面需要本金底座来推算历史日期的净入金，必须一起发布
+          cp data/net_deposit.json _site/data/
 
       - uses: actions/upload-pages-artifact@v3
         with:
