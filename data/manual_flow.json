@@ -9,12 +9,14 @@
     "inflow_usdt": 1003.12
   },
   "2026-10-26": {
-    "outflow_usdt": 151.32,
-    "inflow_usdt": 0.0
+    "outflow_usdt": 1156.32,
+    "inflow_usdt": 0.0,
+    "note": "两笔出金：151.32 + 1005"
   },
   "2026-10-27": {
-    "outflow_usdt": 1005.0,
-    "inflow_usdt": 0.0
+    "outflow_usdt": 0.0,
+    "inflow_usdt": 0.0,
+    "note": "原先误记在此的 1005 出金已归入 10-26"
   },
   "2026-10-30": {
     "outflow_usdt": 300.0,
