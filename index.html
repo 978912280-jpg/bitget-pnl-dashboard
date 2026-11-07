@@ -187,6 +187,8 @@ const COIN_FULL={BTC:'Bitcoin',ETH:'Ethereum',SOL:'Solana',USDT:'Tether',USDC:'U
 let depositBase=0;
 let focusDate=null;   // 非空表示正在查看某个历史日期的快照
 let trendGran='day';  // 总资产趋势粒度：day 按天 / month 按月（取当月最后一天）
+let shiftPeriodFn=null;  // 盈亏统计的周期切换入口，每次 render 时指向最新实现
+let calSwiped=false;     // 刚完成一次左右滑动 → 抑制紧随其后的点击
 
 // 盈亏统计模块的状态：周期（日/周/月/年）、显示模式（网格/柱状）、日历当前年月
 const pnlState={period:'day',view:'grid',calYear:0,calMonth:0};
@@ -335,7 +337,7 @@ function render(hist){
         </div>
       </div>
       <div id="pnlCalendar"></div>
-      <div class="pnl-hint">点击有数据的日期格子，可查看当天的总资产、持仓明细等全部指标；再点一次或点顶部按钮返回最新。</div>
+      <div class="pnl-hint">点击有数据的日期格子，可查看当天的总资产、持仓明细等全部指标；再点一次或点顶部按钮返回最新。左右滑动卡片可切换上 / 下个周期。</div>
       <div class="chart" id="c_pnl" style="display:none"></div>
     </div>`;
   $('#trendArea').innerHTML=`
@@ -584,16 +586,8 @@ function render(hist){
     $('#c_pnl').style.display='none';
 
     const gp=$('#gridPrev'), gn=$('#gridNext');
-    if(gp)gp.onclick=()=>{
-      if(period==='week'){pnlState.calMonth--;if(pnlState.calMonth<0){pnlState.calMonth=11;pnlState.calYear--;}}
-      else if(period==='month'){pnlState.calYear--;}
-      renderGrid();
-    };
-    if(gn)gn.onclick=()=>{
-      if(period==='week'){pnlState.calMonth++;if(pnlState.calMonth>11){pnlState.calMonth=0;pnlState.calYear++;}}
-      else if(period==='month'){pnlState.calYear++;}
-      renderGrid();
-    };
+    if(gp)gp.onclick=()=>shiftPeriodFn&&shiftPeriodFn(-1);
+    if(gn)gn.onclick=()=>shiftPeriodFn&&shiftPeriodFn(1);
   }
 
   function renderCalendar(){
@@ -635,6 +629,7 @@ function render(hist){
     $('#c_pnl').style.display='none';
     // 点击有数据的日期格子 → 整个仪表台切换到该日快照；再次点击同一天或点「返回最新」退出
     $('#pnlCalendar').onclick=e=>{
+      if(calSwiped)return;                      // 刚划过一下，不触发点击
       const cell=e.target.closest('[data-date]');
       if(!cell)return;
       const ds=cell.dataset.date;
@@ -642,8 +637,44 @@ function render(hist){
       render(hist);
     };
     const cp=$('#calPrev'),cn=$('#calNext');
-    if(cp)cp.onclick=()=>{pnlState.calMonth--;if(pnlState.calMonth<0){pnlState.calMonth=11;pnlState.calYear--;}renderCalendar();};
-    if(cn)cn.onclick=()=>{pnlState.calMonth++;if(pnlState.calMonth>11){pnlState.calMonth=0;pnlState.calYear++;}renderCalendar();};
+    if(cp)cp.onclick=()=>shiftPeriodFn&&shiftPeriodFn(-1);
+    if(cn)cn.onclick=()=>shiftPeriodFn&&shiftPeriodFn(1);
+  }
+
+  // 周期切换的唯一入口：dir=1 下个周期，-1 上个周期。
+  // 日/周视图按月翻，月视图按年翻；年视图已在时间轴上铺开，不翻。
+  shiftPeriodFn=(dir)=>{
+    const p=pnlState.period;
+    if(p==='day'||p==='week'){
+      let m=pnlState.calMonth+dir, y=pnlState.calYear;
+      if(m>11){m=0;y++;}else if(m<0){m=11;y--;}
+      pnlState.calMonth=m; pnlState.calYear=y;
+    }else if(p==='month'){
+      pnlState.calYear+=dir;
+    }else{
+      return;
+    }
+    if(pnlState.view==='grid')renderGrid(); else renderCalendar();
+  };
+
+  // 卡片左右滑动切换周期（元素常驻，只绑一次；回调走最新一次渲染的 shiftPeriodFn）
+  const calBox=$('#pnlCalendar');
+  if(calBox&&!calBox.__swipeBound){
+    calBox.__swipeBound=true;
+    let sxs=0, sys=0;
+    calBox.addEventListener('touchstart',e=>{
+      const t=e.touches&&e.touches[0]; if(!t)return;
+      sxs=t.clientX; sys=t.clientY;
+    },{passive:true});
+    calBox.addEventListener('touchend',e=>{
+      const t=e.changedTouches&&e.changedTouches[0]; if(!t)return;
+      const dx=t.clientX-sxs, dy=t.clientY-sys;
+      // 横向位移足够大且明显大于纵向，才算一次滑动（避免和页面上下滚动冲突）
+      if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.6)return;
+      calSwiped=true;
+      setTimeout(()=>{calSwiped=false;},400);
+      shiftPeriodFn&&shiftPeriodFn(dx<0?1:-1);
+    },{passive:true});
   }
 
   // 柱状图视图（横向条形，可读性更好）
