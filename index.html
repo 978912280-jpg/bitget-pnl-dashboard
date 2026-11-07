@@ -49,6 +49,7 @@
   .holdings .coin-name{font-weight:600;font-size:14px}
   .holdings .coin-full{color:var(--muted);font-size:11px;margin-top:1px}
   .holdings .amt{font-variant-numeric:tabular-nums;font-weight:500}
+  .holdings .px{font-variant-numeric:tabular-nums;font-weight:500;color:#b9c4d8;font-size:12.5px}
   .holdings .val{font-variant-numeric:tabular-nums;font-weight:600}
   .holdings .pct-text{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted)}
   .holdings .pct-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:5px}
@@ -279,12 +280,20 @@ function render(hist){
   });
   const coins=Object.values(coinMap).sort((a,b)=>b.usdt-a.usdt);
   const holdTotal=coins.reduce((s,c)=>s+c.usdt,0);
+  // 价格：用「市值/数量」反推（同一币种各账户共用同一行情价），避免用到过期价格字段
+  const pxOf=c=>(c.amount>0?c.usdt/c.amount:0);
+  const fmtPx=v=>{
+    if(!v) return '—';
+    if(v>=1000) return fmt(v,2);
+    if(v>=1) return fmt(v,3);
+    return v.toFixed(v>=0.1?4:6);
+  };
   $('#holdings').innerHTML=`
     <h2>持仓明细${isFocus?' · '+latest.date:''}</h2>
-    <div class="desc">各币种数量与 USDT 市值（现货+理财合并，按市值降序）${isFocus?' · 该日快照':''}</div>
+    <div class="desc">各币种价格、数量与 USDT 市值（现货+理财合并，按市值降序）${isFocus?' · 该日快照':''}</div>
     <table>
-      <colgroup><col style="width:36%"><col style="width:22%"><col style="width:22%"><col style="width:20%"></colgroup>
-      <thead><tr><th>币种</th><th class="num">数量</th><th class="num">价值 (USDT)</th><th class="num">占比</th></tr></thead>
+      <colgroup><col style="width:28%"><col style="width:22%"><col style="width:19%"><col style="width:18%"><col style="width:13%"></colgroup>
+      <thead><tr><th>币种</th><th class="num">价格 (USDT)</th><th class="num">数量</th><th class="num">价值 (USDT)</th><th class="num">占比</th></tr></thead>
       <tbody>${coins.map(c=>{
         const kinds=[...c.kinds];
         const kindCls=kinds.length>1?'mix':(kinds[0]==='spot'?'spot':'earn');
@@ -296,12 +305,13 @@ function render(hist){
             <div><div class="coin-name">${c.coin}<span class="kind-tag ${kindCls}">${kindLabel}</span></div>
             <div class="coin-full">${COIN_FULL[c.coin]||c.coin}</div></div>
           </div></td>
+          <td class="num px">${fmtPx(pxOf(c))}</td>
           <td class="num amt">${fmtAmt(c.amount)}</td>
           <td class="num val">${fmt(c.usdt)}</td>
           <td class="num"><div class="pct-text">${pctV.toFixed(1)}%</div><div class="pct-bar"><div class="pct-fill" style="width:${pctV}%;background:${coinColor(c.coin)}"></div></div></td>
         </tr>`;
       }).join('')}</tbody>
-      <tfoot><tr><td>合计</td><td class="num">—</td><td class="num">${fmt(holdTotal)}</td><td class="num pct-text">100%</td></tr></tfoot>
+      <tfoot><tr><td>合计</td><td class="num">—</td><td class="num">—</td><td class="num">${fmt(holdTotal)}</td><td class="num pct-text">100%</td></tr></tfoot>
     </table>`;
 
   // —— 图表 ——
