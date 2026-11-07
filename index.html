@@ -356,11 +356,15 @@ function render(hist){
       label:{show:true,formatter:latest.date,color:'#9fe1ff',fontSize:11,position:'insideEndTop'},
       data:[{xAxis:latest.date}]};
   }
-  // 真实总盈亏曲线：逐点按正负上色（正=绿，负=红），线段与圆点同色，走右侧坐标轴
+  // 真实总盈亏曲线：逐段按「当日涨跌」上色——比前一日高=绿，比前一日低=红，
+  // 这样即使累计一直为正，也能看出哪几天在回撤
   const REAL_POS='#34d399', REAL_NEG='#f87171';
+  let prevReal=null;
   const realData=hist.map(h=>{
     const v=h.realPnlUsdt!=null?h.realPnlUsdt:((h.totalUsdt||0)-(h.netDepositUsdt||0));
-    const c=v>=0?REAL_POS:REAL_NEG;
+    const rising=prevReal==null?v>=0:v>=prevReal;
+    const c=rising?REAL_POS:REAL_NEG;
+    prevReal=v;
     return {value:round2(v),itemStyle:{color:c},lineStyle:{color:c}};
   });
   const realSeries={
