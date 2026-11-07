@@ -3243,11 +3243,11 @@
   },
   {
     "date": "2026-11-08",
-    "ts": 1794076109728,
-    "totalUsdt": 16145.408771,
-    "spotUsdt": 53.312235,
-    "earnUsdt": 16092.096536,
-    "marketPnlUsdt": -0.173026,
+    "ts": 1794076584977,
+    "totalUsdt": 16142.258233,
+    "spotUsdt": 53.297578,
+    "earnUsdt": 16088.960655,
+    "marketPnlUsdt": -0.197308,
     "depositUsdt": 0.0,
     "withdrawUsdt": 0.0,
     "netFlowUsdt": 0.0,
@@ -3257,8 +3257,8 @@
       {
         "coin": "BTC",
         "amount": 0.08224803,
-        "price": 75817.29,
-        "usdt": 6235.822742,
+        "price": 75837.81,
+        "usdt": 6237.510472,
         "kind": "earn"
       },
       {
@@ -3271,8 +3271,8 @@
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 89.82,
-        "usdt": 3938.69682,
+        "price": 89.71,
+        "usdt": 3933.87321,
         "kind": "earn"
       },
       {
@@ -3285,22 +3285,22 @@
       {
         "coin": "BGB",
         "amount": 12.557502702409304,
-        "price": 1.7463,
-        "usdt": 21.929167,
+        "price": 1.7462,
+        "usdt": 21.927911,
         "kind": "spot"
       },
       {
         "coin": "SOL",
         "amount": 0.14668904,
-        "price": 89.82,
-        "usdt": 13.17561,
+        "price": 89.71,
+        "usdt": 13.159474,
         "kind": "spot"
       },
       {
         "coin": "BTC",
         "amount": 0.0001332513,
-        "price": 75817.29,
-        "usdt": 10.102752,
+        "price": 75837.81,
+        "usdt": 10.105487,
         "kind": "spot"
       },
       {
@@ -3325,12 +3325,12 @@
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": -27.565206,
-    "dailyChangePct": -0.17044,
-    "cumChangeUsdt": -2008.091385,
-    "cumChangePct": -10.910943,
+    "dailyChangeUsdt": -30.715744,
+    "dailyChangePct": -0.18992,
+    "cumChangeUsdt": -2011.241923,
+    "cumChangePct": -10.928061,
     "netDepositUsdt": 15365.0,
-    "realPnlUsdt": 780.408771,
-    "realPnlPct": 5.079133
+    "realPnlUsdt": 777.258233,
+    "realPnlPct": 5.058628
   }
 ]
