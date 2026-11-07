@@ -15,6 +15,7 @@
     --text:#e8edf6; --muted:#8b96ad; --faint:#5a6680;
     --accent:#f0b429; --spot:#4f8cff; --earn:#f0b429;
     --pos:#34d399; --neg:#f87171;
+    --card:var(--panel); --border:var(--line);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:var(--bg);color:var(--text);
@@ -94,6 +95,20 @@
   .cal-cell.neg{background:rgba(248,113,113,0.14)}.cal-cell.neg .v{color:var(--neg)}
   .cal-cell.today{border:1.5px solid var(--accent)}
   .cal-cell.future .d{opacity:.35}
+  .cal-cell.has{cursor:pointer}
+  .cal-cell.has:hover{filter:brightness(1.18)}
+  .pnl-hint{color:var(--faint);font-size:11px;margin-top:10px;line-height:1.5}
+  .cal-cell.sel{outline:2px solid #7dd3fc;outline-offset:0;box-shadow:0 0 0 3px rgba(125,211,252,0.18)}
+  /* 历史日期查看条 */
+  .focusbar{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    background:rgba(125,211,252,0.10);border:1px solid rgba(125,211,252,0.35);border-radius:12px;
+    padding:12px 16px;margin-bottom:16px}
+  .focusbar.on{display:flex}
+  .focusbar .fb-title{font-size:14px;font-weight:700;color:#9fe1ff}
+  .focusbar .fb-sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .focusbar button{background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .focusbar button:hover{border-color:#7dd3fc;color:#9fe1ff}
   /* 周期方块网格（周/月/年） */
   .pnl-blocks{display:grid;gap:8px}
   .pnl-block{background:var(--panel2);border-radius:10px;padding:12px 10px;text-align:center;min-height:64px;display:flex;flex-direction:column;justify-content:center;transition:background .15s}
@@ -123,6 +138,8 @@
     </div>
     <div class="update" id="update"></div>
   </header>
+
+  <section class="focusbar" id="focusBar"></section>
 
   <section class="kpis" id="kpis"></section>
 
@@ -156,6 +173,16 @@ const coinColor=c=>{let h=0;for(let i=0;i<c.length;i++)h=(h*31+c.charCodeAt(i))%
 const COIN_FULL={BTC:'Bitcoin',ETH:'Ethereum',SOL:'Solana',USDT:'Tether',USDC:'USD Coin',BGB:'Bitget Token',USDGO:'USDGO',XRP:'Ripple',DOGE:'Dogecoin',ADA:'Cardano',AVAX:'Avalanche',LINK:'Chainlink',DOT:'Polkadot',LTC:'Litecoin',TRX:'Tron',ATOM:'Cosmos',UNI:'Uniswap',NEAR:'NEAR Protocol',APT:'Aptos',ARB:'Arbitrum',OP:'Optimism',FIL:'Filecoin',SUI:'Sui',TON:'Toncoin',PEPE:'Pepe',WIF:'dogwifcoin',FLOKI:'FLOKI',BONK:'Bonk',JUP:'Jupiter',TIA:'Celestia',INJ:'Injective',SEI:'Sei',RNDR:'Render',FET:'Fetch.ai',AAVE:'Aave',MKR:'Maker',COMP:'Compound',CRV:'Curve',SNX:'Synthetix',GRT:'The Graph','1INCH':'1inch',ENJ:'Enjin',MANA:'Decentraland',SAND:'The Sandbox',AXS:'Axie Infinity',ICP:'Internet Computer',VET:'VeChain',EOS:'EOS',XTZ:'Tezos',ALGO:'Algorand',NEO:'Neo',ONT:'Ontology',ZIL:'Zilliqa',ONE:'Harmony',ROSE:'Oasis Network',KAVA:'Kava',RUNE:'THORChain',ATOM2:'Cosmos',LUNA:'Terra',LUNC:'Terra Classic',USTC:'TerraClassicUSD',FTM:'Fantom',CELO:'Celo',YFI:'yearn.finance',BAL:'Balancer',CRV2:'Curve',CVX:'Convex Finance',FXS:'Frax Share',DYDX:'dYdX',GMX:'GMX',RDNT:'Radiant Capital',PENDLE:'Pendle',LDO:'Lido DAO',RPL:'Rocket Pool',FRAX:'Frax',DAI:'Dai',WBTC:'Wrapped BTC',WETH:'Wrapped ETH',STETH:'Lido Staked ETH',CBETH:'Coinbase Wrapped BTC',RETH:'Rocket Pool ETH',SFRXETH:'Staked Frax Ether'};
 
 let depositBase=0;
+let focusDate=null;   // 非空表示正在查看某个历史日期的快照
+
+// 盈亏统计模块的状态：周期（日/周/月/年）、显示模式（网格/柱状）、日历当前年月
+const pnlState={period:'day',view:'grid',calYear:0,calMonth:0};
+// 北京时间日期（UTC+8，无夏令时）。快照按北京日期归档，页面必须用同一口径判断“今天”
+function bjDateStr(d){
+  const t=new Date((d?d.getTime():Date.now())+8*3600*1000);
+  return t.toISOString().slice(0,10);
+}
+(()=>{const t=new Date(Date.now()+8*3600*1000);pnlState.calYear=t.getUTCFullYear();pnlState.calMonth=t.getUTCMonth();})();
 async function load(){
   let hist=[];
   try{
@@ -173,7 +200,11 @@ async function load(){
 
 function render(hist){
   if(!hist.length){ renderEmpty(); return; }
-  const latest=hist[hist.length-1];
+  const live=hist[hist.length-1];
+  // 是否正在查看某个历史日期（点击日历格子进入）
+  const focusRec=focusDate?hist.find(h=>h.date===focusDate):null;
+  const latest=focusRec||live;
+  const isFocus=!!focusRec;
   const daily=latest.dailyChangeUsdt!=null?latest.dailyChangeUsdt:0;
   const cum=latest.cumChangeUsdt!=null?latest.cumChangeUsdt:0;
   const spot=latest.spotUsdt||0, earn=latest.earnUsdt||0;
@@ -183,12 +214,25 @@ function render(hist){
   const netFlow=latest.netFlowUsdt!=null?latest.netFlowUsdt:(dep-wit);
   const flowNote=latest.flowNote||'';
   // 净入金总额 = 本金底座 + 累计净出入金（优先用脚本写入值，回退到本地推算）
-  let cumFlow=0; hist.forEach(h=>{cumFlow+=(h.netFlowUsdt||0)});
+  let cumFlow=0; hist.forEach(h=>{ if(h.date<=latest.date) cumFlow+=(h.netFlowUsdt||0); });
   const netDeposit=latest.netDepositUsdt!=null?latest.netDepositUsdt:(depositBase+cumFlow);
   const realPnl=latest.realPnlUsdt!=null?latest.realPnlUsdt:(latest.totalUsdt-netDeposit);
   const realPnlPct=(latest.realPnlPct!=null)?latest.realPnlPct:(netDeposit?(realPnl/netDeposit*100):0);
 
   $('#update').textContent='数据截至 '+latest.date+' '+new Date(latest.ts).toLocaleString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
+
+  // —— 历史日期查看条 ——
+  const fb=$('#focusBar');
+  if(isFocus){
+    fb.classList.add('on');
+    fb.innerHTML=`<div><div class="fb-title">正在查看 ${latest.date} 的历史快照</div>
+      <div class="fb-sub">下方全部指标与持仓均为该日数据，非当前净值</div></div>
+      <button id="fbBack">返回最新（${live.date}）</button>`;
+    const bk=$('#fbBack'); if(bk)bk.onclick=()=>{focusDate=null;render(hist);};
+    window.scrollTo({top:0,behavior:'smooth'});
+  }else{
+    fb.classList.remove('on'); fb.innerHTML='';
+  }
 
   const k=[
     {lab:'总资产 (USDT)', val:fmt(latest.totalUsdt), cls:'accent', delta:'币种 '+latest.coinCount+' 种 · 现货+理财'},
@@ -196,8 +240,8 @@ function render(hist){
      delta:'历史本金底座 + 累计出入金'},
     {lab:'真实总盈亏', val:signed(realPnl), cls:colorOf(realPnl),
      delta:'总资产 − 净入金 '+pct(realPnlPct)},
-    {lab:'今日盈亏', val:signed(daily), cls:colorOf(daily),
-     delta:'较上一快照 '+pct(latest.dailyChangePct)},
+    {lab:(isFocus?'当日盈亏':'今日盈亏'), val:signed(daily), cls:colorOf(daily),
+     delta:(isFocus?'该日较前一日快照 ':'较上一快照 ')+pct(latest.dailyChangePct)},
     {lab:'总盈亏', val:signed(cum), cls:colorOf(cum),
      delta:'自建仓首日 '+pct(latest.cumChangePct)},
     {lab:'当日净出入金', val:signed(netFlow),
@@ -224,8 +268,8 @@ function render(hist){
   const coins=Object.values(coinMap).sort((a,b)=>b.usdt-a.usdt);
   const holdTotal=coins.reduce((s,c)=>s+c.usdt,0);
   $('#holdings').innerHTML=`
-    <h2>持仓明细</h2>
-    <div class="desc">各币种数量与 USDT 市值（现货+理财合并，按市值降序）</div>
+    <h2>持仓明细${isFocus?' · '+latest.date:''}</h2>
+    <div class="desc">各币种数量与 USDT 市值（现货+理财合并，按市值降序）${isFocus?' · 该日快照':''}</div>
     <table>
       <colgroup><col style="width:36%"><col style="width:22%"><col style="width:22%"><col style="width:20%"></colgroup>
       <thead><tr><th>币种</th><th class="num">数量</th><th class="num">价值 (USDT)</th><th class="num">占比</th></tr></thead>
@@ -269,10 +313,15 @@ function render(hist){
         </div>
       </div>
       <div id="pnlCalendar"></div>
+      <div class="pnl-hint">点击有数据的日期格子，可查看当天的总资产、持仓明细等全部指标；再点一次或点顶部按钮返回最新。</div>
       <div class="chart" id="c_pnl" style="display:none"></div>
     </div>
     <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
-    <div class="card"><h2>币种分布</h2><div class="desc">最新快照各币 USDT 市值（前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
+    <div class="card"><h2>币种分布</h2><div class="desc">${isFocus?latest.date+' 快照':''}各币 USDT 市值（前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
+
+  // 重渲染后同步周期/视图按钮的选中态（默认标记的是「日 + 网格」）
+  $('#periodTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.p===pnlState.period));
+  $('#viewToggle').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.v===pnlState.view));
 
   const axisColor='#5a6680', textColor='#8b96ad';
   const baseAxis={axisLine:{lineStyle:{color:'#243049'}},axisLabel:{color:textColor,fontFamily:'Noto Sans SC'},splitLine:{lineStyle:{color:'#1c2440'}}};
@@ -280,13 +329,24 @@ function render(hist){
     backgroundColor:'#1a2339',borderColor:'#243049',textStyle:{color:'#e8edf6'}};
 
   // 总资产趋势
+  const totalSeries={
+    type:'line',data:hist.map(h=>h.totalUsdt),smooth:.3,symbol:'circle',symbolSize:7,
+    lineStyle:{color:'#f0b429',width:2.5},itemStyle:{color:'#f0b429'},
+    areaStyle:{color:'rgba(240,180,41,0.10)'}
+  };
+  // 查看历史日期时，在趋势图上标出该日位置
+  if(isFocus){
+    totalSeries.markLine={silent:true,symbol:'none',
+      lineStyle:{color:'#7dd3fc',width:1.5,type:'dashed'},
+      label:{show:true,formatter:latest.date,color:'#9fe1ff',fontSize:11,position:'insideEndTop'},
+      data:[{xAxis:latest.date}]};
+  }
   echarts.init($('#c_total')).setOption({
     grid:{left:60,right:24,top:20,bottom:34},
     tooltip:{...tip,valueFormatter:v=>fmt(v)+' USDT'},
     xAxis:{type:'category',data:dates,...baseAxis,axisLabel:{color:textColor}},
     yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
-    series:[{type:'line',data:hist.map(h=>h.totalUsdt),smooth:.3,symbol:'circle',symbolSize:7,
-      lineStyle:{color:'#f0b429',width:2.5},itemStyle:{color:'#f0b429'},areaStyle:{color:'rgba(240,180,41,0.10)'}}]
+    series:[totalSeries]
   });
 
   // 现货/理财 堆叠面积
@@ -305,13 +365,6 @@ function render(hist){
   });
 
   // —— 盈亏统计模块（网格/柱状图 + 日/周/月/年切换）——
-  const pnlState={period:'day',view:'grid',calYear:0,calMonth:0};
-  // 北京时间日期（UTC+8，无夏令时）。快照按北京日期归档，页面必须用同一口径判断“今天”
-  function bjDateStr(d){
-    const t=new Date((d?d.getTime():Date.now())+8*3600*1000);
-    return t.toISOString().slice(0,10);
-  }
-  (()=>{const t=new Date(Date.now()+8*3600*1000);pnlState.calYear=t.getUTCFullYear();pnlState.calMonth=t.getUTCMonth();})();
 
   // 标准 ISO 周号（基于周四归属法）
   function getISOWeek(date){
@@ -456,15 +509,27 @@ function render(hist){
       if(v!=null)cls+=v>=0?' pos':' neg';
       if(isToday)cls+=' today';
       if(isFuture&&v==null)cls+=' future';
+      if(rec)cls+=' has';                       // 有快照 → 可点击查看当日数据
+      if(ds===focusDate)cls+=' sel';
       const valStr=v!=null?(v>=0?'+':'')+fmt(v,1):(isFuture?'—':'0.0');
       // 1号用grid-column-start定位到正确星期列，其余自动流动，无需空白占位格
       const colStyle=day===1?` style="grid-column-start:${startDow+1}"`:'';
-      html+=`<div class="${cls}"${colStyle}><div class="d">${day}</div><div class="v">${valStr}</div></div>`;
+      const dataAttr=rec?` data-date="${ds}"`:'';
+      const titleAttr=rec?` title="点击查看 ${ds} 的完整数据"`:'';
+      html+=`<div class="${cls}"${colStyle}${dataAttr}${titleAttr}><div class="d">${day}</div><div class="v">${valStr}</div></div>`;
     }
     html+='</div>';
     $('#pnlCalendar').innerHTML=html;
     $('#pnlCalendar').style.display='';
     $('#c_pnl').style.display='none';
+    // 点击有数据的日期格子 → 整个仪表台切换到该日快照；再次点击同一天或点「返回最新」退出
+    $('#pnlCalendar').onclick=e=>{
+      const cell=e.target.closest('[data-date]');
+      if(!cell)return;
+      const ds=cell.dataset.date;
+      focusDate=(focusDate===ds)?null:ds;
+      render(hist);
+    };
     const cp=$('#calPrev'),cn=$('#calNext');
     if(cp)cp.onclick=()=>{pnlState.calMonth--;if(pnlState.calMonth<0){pnlState.calMonth=11;pnlState.calYear--;}renderCalendar();};
     if(cn)cn.onclick=()=>{pnlState.calMonth++;if(pnlState.calMonth>11){pnlState.calMonth=0;pnlState.calYear++;}renderCalendar();};
