@@ -185,6 +185,7 @@ const COIN_FULL={BTC:'Bitcoin',ETH:'Ethereum',SOL:'Solana',USDT:'Tether',USDC:'U
 
 let depositBase=0;
 let focusDate=null;   // 非空表示正在查看某个历史日期的快照
+let trendGran='day';  // 总资产趋势粒度：day 按天 / month 按月（取当月最后一天）
 
 // 盈亏统计模块的状态：周期（日/周/月/年）、显示模式（网格/柱状）、日历当前年月
 const pnlState={period:'day',view:'grid',calYear:0,calMonth:0};
@@ -328,7 +329,19 @@ function render(hist){
       <div class="chart" id="c_pnl" style="display:none"></div>
     </div>`;
   $('#trendArea').innerHTML=`
-    <div class="card wide"><h2>总资产趋势</h2><div class="desc">左轴：全账户净值（现货+理财）；右轴：真实总盈亏（总资产 − 净入金），绿为正、红为负</div><div class="chart" id="c_total"></div></div>`;
+    <div class="card wide">
+      <div class="pnl-head">
+        <div>
+          <h2>总资产趋势</h2>
+          <div class="desc">左轴：全账户净值（现货+理财）；右轴：真实总盈亏（总资产 − 净入金）</div>
+        </div>
+        <div class="view-toggle" id="trendTabs">
+          <button data-g="day" class="${trendGran==='day'?'active':''}">日</button>
+          <button data-g="month" class="${trendGran==='month'?'active':''}">月</button>
+        </div>
+      </div>
+      <div class="chart" id="c_total"></div>
+    </div>`;
   $('#charts').innerHTML=`
     <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
     <div class="card"><h2>币种分布</h2><div class="desc">${isFocus?latest.date+' 快照':''}各币 USDT 市值（前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
@@ -342,10 +355,25 @@ function render(hist){
   const tip={trigger:'axis',confine:true,
     backgroundColor:'#1a2339',borderColor:'#243049',textStyle:{color:'#e8edf6'}};
 
+  // 总资产趋势：按天 / 按月两种粒度。按月取「当月最后一条快照」，
+  // 而不是月均值——否则会抹平月末的实际水平，趋势反而失真。
+  const realOf=h=>(h.realPnlUsdt!=null?round2(h.realPnlUsdt):round2((h.totalUsdt||0)-(h.netDepositUsdt||0)));
+  let trendXs=dates, trendTotals=hist.map(h=>h.totalUsdt), trendReals=hist.map(realOf), trendDates=dates;
+  if(trendGran==='month'&&hist.length){
+    const byMonth={};
+    hist.forEach(h=>{byMonth[h.date.slice(0,7)]=h;});     // 同月后出现的覆盖前面的 → 天然取最后一天
+    const keys=Object.keys(byMonth).sort();
+    trendXs=keys.map(k=>k.replace('-','.'));              // 2026.10 这种短标签，手机上更省地方
+    trendTotals=keys.map(k=>byMonth[k].totalUsdt);
+    trendReals=keys.map(k=>realOf(byMonth[k]));
+    trendDates=keys.map(k=>byMonth[k].date);
+  }
+  const axisMarkX=trendGran==='month'?latest.date.slice(0,7).replace('-','.'):latest.date;
+
   // 总资产趋势
   const totalSeries={
     name:'总资产',
-    type:'line',data:hist.map(h=>h.totalUsdt),smooth:.3,symbol:'circle',symbolSize:7,
+    type:'line',data:trendTotals,smooth:.3,symbol:'circle',symbolSize:7,
     lineStyle:{color:'#f0b429',width:2.5},itemStyle:{color:'#f0b429'},
     areaStyle:{color:'rgba(240,180,41,0.10)'}
   };
@@ -354,12 +382,11 @@ function render(hist){
     totalSeries.markLine={silent:true,symbol:'none',
       lineStyle:{color:'#7dd3fc',width:1.5,type:'dashed'},
       label:{show:true,formatter:latest.date,color:'#9fe1ff',fontSize:11,position:'insideEndTop'},
-      data:[{xAxis:latest.date}]};
+      data:[{xAxis:axisMarkX}]};
   }
   // 真实总盈亏曲线：逐点按正负上色（正=绿，负=红），线段与圆点同色，走右侧坐标轴
   const REAL_POS='#34d399', REAL_NEG='#f87171';
-  const realData=hist.map(h=>{
-    const v=h.realPnlUsdt!=null?h.realPnlUsdt:((h.totalUsdt||0)-(h.netDepositUsdt||0));
+  const realData=trendReals.map(v=>{
     const c=v>=0?REAL_POS:REAL_NEG;
     return {value:round2(v),itemStyle:{color:c},lineStyle:{color:c}};
   });
@@ -375,7 +402,7 @@ function render(hist){
     grid:{left:60,right:64,top:38,bottom:34},
     legend:{data:['总资产','真实总盈亏'],textStyle:{color:textColor,fontSize:11},top:0,itemWidth:14,itemHeight:9},
     tooltip:{...tip,valueFormatter:v=>fmt(v)+' USDT'},
-    xAxis:{type:'category',data:dates,...baseAxis,axisLabel:{color:textColor}},
+    xAxis:{type:'category',data:trendXs,...baseAxis,axisLabel:{color:textColor}},
     yAxis:[
       {type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
       {type:'value',...baseAxis,name:'真实总盈亏',axisLabel:{color:REAL_POS,formatter:v=>fmt(v,0)},
@@ -383,6 +410,14 @@ function render(hist){
     ],
     series:[totalSeries,realSeries]
   });
+
+  // 粒度切换：只重渲染整页（数据在内存里，不重新请求），按钮态由模板里的 class 决定
+  const tt=$('#trendTabs');
+  if(tt)tt.querySelectorAll('button').forEach(b=>{b.onclick=()=>{
+    if(b.dataset.g===trendGran)return;
+    trendGran=b.dataset.g;
+    render(hist);
+  };});
 
   // 现货/理财 堆叠面积
   echarts.init($('#c_split')).setOption({
