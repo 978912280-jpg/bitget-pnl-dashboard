@@ -338,6 +338,7 @@ function render(hist){
       </div>
       <div id="pnlCalendar"></div>
       <div class="pnl-hint">点击有数据的日期格子，可查看当天的总资产、持仓明细等全部指标；再点一次或点顶部按钮返回最新。左右滑动卡片可切换上 / 下个周期。</div>
+      <div id="pnlChartNav" class="cal-nav" style="display:none"></div>
       <div class="chart" id="c_pnl" style="display:none"></div>
     </div>`;
   $('#trendArea').innerHTML=`
@@ -584,6 +585,7 @@ function render(hist){
     $('#pnlCalendar').innerHTML=html;
     $('#pnlCalendar').style.display='';
     $('#c_pnl').style.display='none';
+    if($('#pnlChartNav'))$('#pnlChartNav').style.display='none';
 
     const gp=$('#gridPrev'), gn=$('#gridNext');
     if(gp)gp.onclick=()=>shiftPeriodFn&&shiftPeriodFn(-1);
@@ -627,6 +629,7 @@ function render(hist){
     $('#pnlCalendar').innerHTML=html;
     $('#pnlCalendar').style.display='';
     $('#c_pnl').style.display='none';
+    if($('#pnlChartNav'))$('#pnlChartNav').style.display='none';
     // 点击有数据的日期格子 → 整个仪表台切换到该日快照；再次点击同一天或点「返回最新」退出
     $('#pnlCalendar').onclick=e=>{
       if(calSwiped)return;                      // 刚划过一下，不触发点击
@@ -654,11 +657,13 @@ function render(hist){
     }else{
       return;
     }
-    if(pnlState.view==='grid')renderGrid(); else renderCalendar();
+    if(pnlState.view==='chart')renderPnlChart();
+    else if(pnlState.view==='grid')renderGrid();
+    else renderCalendar();
   };
 
   // 卡片左右滑动切换周期（元素常驻，只绑一次；回调走最新一次渲染的 shiftPeriodFn）
-  const calBox=$('#pnlCalendar');
+  const calBox=$('#pnlSection');
   if(calBox&&!calBox.__swipeBound){
     calBox.__swipeBound=true;
     let sxs=0, sys=0;
@@ -677,24 +682,73 @@ function render(hist){
     },{passive:true});
   }
 
-  // 柱状图视图（横向条形，可读性更好）
+  // 柱状图视图：横轴日期、纵轴金额的竖向柱；窗口跟随当前周期（日/周按月、月按年）
+  function pnlBars(){
+    const p=pnlState.period, y=pnlState.calYear, m=pnlState.calMonth;
+    const data=aggPnl(p);
+    const valOf=k=>{const f=data.find(x=>x[0]===k);return f?Math.round(f[1]*100)/100:null;};
+    let keys=[], labels=[], title='';
+    if(p==='day'){
+      title=y+'-'+String(m+1).padStart(2,'0');
+      const lastDay=new Date(y,m+1,0).getDate();
+      for(let d=1;d<=lastDay;d++){
+        keys.push(title+'-'+String(d).padStart(2,'0'));
+        labels.push(String(d));
+      }
+    } else if(p==='week'){
+      title=y+'-'+String(m+1).padStart(2,'0');
+      const monthStart=new Date(y,m,1), monthEnd=new Date(y,m+1,0);
+      const startDow=(monthStart.getDay()+6)%7;
+      const firstMonday=new Date(monthStart); firstMonday.setDate(monthStart.getDate()-startDow);
+      let cur=new Date(firstMonday);
+      while(cur<=monthEnd){
+        const iso=getISOWeek(cur);
+        const k=iso.year+'-W'+String(iso.week).padStart(2,'0');
+        if(keys.indexOf(k)<0){keys.push(k);labels.push('W'+iso.week);}
+        cur=new Date(cur); cur.setDate(cur.getDate()+7);
+      }
+    } else if(p==='month'){
+      title=y+'年';
+      for(let i=1;i<=12;i++){keys.push(y+'-'+String(i).padStart(2,'0'));labels.push(i+'月');}
+    } else {
+      const years=data.map(x=>parseInt(x[0]));
+      const minY=years.length?Math.min(...years):new Date().getFullYear();
+      const maxY=new Date().getFullYear()+2;
+      title='全部年份';
+      for(let yy=minY;yy<=maxY;yy++){keys.push(String(yy));labels.push(String(yy));}
+    }
+    return {keys,labels,title,vals:keys.map(valOf)};
+  }
+
   function renderPnlChart(){
-    const data=aggPnl(pnlState.period);
-    const labels=data.map(x=>x[0]);
-    const vals=data.map(x=>Math.round(x[1]*100)/100);
-    const total=vals.reduce((s,v)=>s+v,0);
+    const {keys,labels,title,vals}=pnlBars();
     $('#pnlCalendar').style.display='none';
     $('#c_pnl').style.display='';
+    const nav=$('#pnlChartNav');
+    const showNav=pnlState.period!=='year';
+    if(nav){
+      nav.style.display='';
+      nav.innerHTML=(showNav?'<button id="pnlPrev">‹</button>':'')
+        +`<span>${title}</span>`
+        +(showNav?'<button id="pnlNext">›</button>':'');
+      const pp=$('#pnlPrev'), pn=$('#pnlNext');
+      if(pp)pp.onclick=()=>shiftPeriodFn&&shiftPeriodFn(-1);
+      if(pn)pn.onclick=()=>shiftPeriodFn&&shiftPeriodFn(1);
+    }
     const chart=echarts.getInstanceByDom($('#c_pnl'))||echarts.init($('#c_pnl'));
     chart.setOption({
-      grid:{left:80,right:60,top:16,bottom:24},
-      tooltip:{...tip,axisPointer:{type:'shadow'},valueFormatter:v=>signed(v)+' USDT'},
-      xAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
-      yAxis:{type:'category',data:labels.slice().reverse(),...baseAxis,axisLabel:{color:textColor,fontSize:11}},
-      series:[{type:'bar',data:vals.slice().reverse(),barWidth:'60%',
-        itemStyle:{color:p=>p.value>=0?'#34d399':'#f87171',borderRadius:[0,4,4,0]},
-        label:{show:true,position:'right',color:'#e8edf6',fontSize:11,fontWeight:600,
-          formatter:p=>(p.value>=0?'+':'')+fmt(p.value,0)}}]
+      grid:{left:52,right:14,top:26,bottom:26},
+      tooltip:{...tip,axisPointer:{type:'shadow'},
+        formatter:ps=>{
+          const it=ps[0]; if(!it||it.value==null)return '';
+          const key=keys[it.dataIndex]||it.axisValue;
+          return key+'<br/>'+(it.value>=0?'+':'')+fmt(it.value,2)+' USDT';
+        }},
+      xAxis:{type:'category',data:labels,...baseAxis,
+        axisLabel:{color:textColor,fontSize:10,interval:'auto'},axisTick:{alignWithLabel:true}},
+      yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+      series:[{type:'bar',data:vals,barMaxWidth:16,
+        itemStyle:{color:p=>(p.value||0)>=0?'#34d399':'#f87171',borderRadius:[3,3,0,0]}}]
     },true);
   }
 
