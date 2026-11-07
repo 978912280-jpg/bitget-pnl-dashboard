@@ -75,7 +75,9 @@
       "SOL": 43.6876
     },
     "cumChangeUsdt": 0.0,
-    "cumChangePct": 0.0
+    "cumChangePct": 0.0,
+    "dailyChangeUsdt": 0.0,
+    "dailyChangePct": 0.0
   },
   {
     "date": "2026-10-05",
@@ -3146,5 +3148,97 @@
     "dailyChangePct": -3.799944,
     "cumChangeUsdt": -2024.101649,
     "cumChangePct": -10.997934
+  },
+  {
+    "date": "2026-11-07",
+    "ts": 1794016127905,
+    "totalUsdt": 16187.94256,
+    "spotUsdt": 51.950156,
+    "earnUsdt": 16135.992404,
+    "marketPnlUsdt": 0.270906,
+    "depositUsdt": 0.0,
+    "withdrawUsdt": 0.0,
+    "netFlowUsdt": 0.0,
+    "flowNote": "",
+    "coinCount": 5,
+    "byCoin": [
+      {
+        "coin": "BTC",
+        "amount": 0.08224803,
+        "price": 76004.44,
+        "usdt": 6251.215461,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDC",
+        "amount": 5684.1905,
+        "price": 1.0,
+        "usdt": 5684.1905,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 43.851,
+        "price": 90.47,
+        "usdt": 3967.19997,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDT",
+        "amount": 233.38647311,
+        "price": 1.0,
+        "usdt": 233.386473,
+        "kind": "earn"
+      },
+      {
+        "coin": "BGB",
+        "amount": 12.557502702409304,
+        "price": 1.7387,
+        "usdt": 21.83373,
+        "kind": "spot"
+      },
+      {
+        "coin": "SOL",
+        "amount": 0.14668904,
+        "price": 90.47,
+        "usdt": 13.270957,
+        "kind": "spot"
+      },
+      {
+        "coin": "BTC",
+        "amount": 0.0001316567,
+        "price": 76004.44,
+        "usdt": 10.006494,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDC",
+        "amount": 6.7795515,
+        "price": 1.0,
+        "usdt": 6.779552,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.05942328,
+        "price": 1.0,
+        "usdt": 0.059423,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "poolx": {},
+    "manualFlow": {
+      "outflow_usdt": 0.0,
+      "inflow_usdt": 0.0,
+      "note": ""
+    },
+    "dailyChangeUsdt": 58.544053,
+    "dailyChangePct": 0.362965,
+    "cumChangeUsdt": -1965.557596,
+    "cumChangePct": -10.679836,
+    "netDepositUsdt": 12727.68,
+    "realPnlUsdt": 3460.26256,
+    "realPnlPct": 27.186907
   }
 ]
