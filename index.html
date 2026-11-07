@@ -171,6 +171,7 @@
 <script>
 const $=s=>document.querySelector(s);
 const fmt=(n,d=2)=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const round2=n=>Math.round((Number(n)||0)*100)/100;
 const signed=n=>((n||0)>0?'+':'')+fmt(n);
 const pct=n=>signed(n)+'%';
 const colorOf=n=>n>=0?'var(--pos)':'var(--neg)';
@@ -327,7 +328,7 @@ function render(hist){
       <div class="chart" id="c_pnl" style="display:none"></div>
     </div>`;
   $('#trendArea').innerHTML=`
-    <div class="card wide"><h2>总资产趋势</h2><div class="desc">全账户净值（现货+理财）随时间变化</div><div class="chart" id="c_total"></div></div>`;
+    <div class="card wide"><h2>总资产趋势</h2><div class="desc">左轴：全账户净值（现货+理财）；右轴：真实总盈亏（总资产 − 净入金），绿为正、红为负</div><div class="chart" id="c_total"></div></div>`;
   $('#charts').innerHTML=`
     <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
     <div class="card"><h2>币种分布</h2><div class="desc">${isFocus?latest.date+' 快照':''}各币 USDT 市值（前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
@@ -343,6 +344,7 @@ function render(hist){
 
   // 总资产趋势
   const totalSeries={
+    name:'总资产',
     type:'line',data:hist.map(h=>h.totalUsdt),smooth:.3,symbol:'circle',symbolSize:7,
     lineStyle:{color:'#f0b429',width:2.5},itemStyle:{color:'#f0b429'},
     areaStyle:{color:'rgba(240,180,41,0.10)'}
@@ -354,12 +356,32 @@ function render(hist){
       label:{show:true,formatter:latest.date,color:'#9fe1ff',fontSize:11,position:'insideEndTop'},
       data:[{xAxis:latest.date}]};
   }
+  // 真实总盈亏曲线：逐点按正负上色（正=绿，负=红），线段与圆点同色，走右侧坐标轴
+  const REAL_POS='#34d399', REAL_NEG='#f87171';
+  const realData=hist.map(h=>{
+    const v=h.realPnlUsdt!=null?h.realPnlUsdt:((h.totalUsdt||0)-(h.netDepositUsdt||0));
+    const c=v>=0?REAL_POS:REAL_NEG;
+    return {value:round2(v),itemStyle:{color:c},lineStyle:{color:c}};
+  });
+  const realSeries={
+    name:'真实总盈亏',type:'line',yAxisIndex:1,data:realData,smooth:.25,
+    symbol:'circle',symbolSize:6,z:3,
+    lineStyle:{width:2},
+    // 0 基线：一眼看出哪些区间处于亏损
+    markLine:{silent:true,symbol:'none',lineStyle:{color:'#5a6680',width:1,type:'dashed'},
+      label:{show:false},data:[{yAxis:0}]}
+  };
   echarts.init($('#c_total')).setOption({
-    grid:{left:60,right:24,top:20,bottom:34},
+    grid:{left:60,right:64,top:38,bottom:34},
+    legend:{data:['总资产','真实总盈亏'],textStyle:{color:textColor,fontSize:11},top:0,itemWidth:14,itemHeight:9},
     tooltip:{...tip,valueFormatter:v=>fmt(v)+' USDT'},
     xAxis:{type:'category',data:dates,...baseAxis,axisLabel:{color:textColor}},
-    yAxis:{type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
-    series:[totalSeries]
+    yAxis:[
+      {type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
+      {type:'value',...baseAxis,name:'真实总盈亏',axisLabel:{color:REAL_POS,formatter:v=>fmt(v,0)},
+       splitLine:{show:false},axisLine:{show:true,lineStyle:{color:'#243049'}}}
+    ],
+    series:[totalSeries,realSeries]
   });
 
   // 现货/理财 堆叠面积
