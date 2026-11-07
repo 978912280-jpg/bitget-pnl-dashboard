@@ -36,7 +36,7 @@
   .kpi .val small{font-size:13px;font-weight:600;color:var(--faint);margin-left:3px}
   .kpi .delta{font-size:12px;margin-top:7px;font-variant-numeric:tabular-nums}
   .pos{color:var(--pos)} .neg{color:var(--neg)} .muted{color:var(--muted)} .accent{color:var(--accent)}
-  .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
   .holdings{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
   .holdings h2{margin:0 0 3px;font-size:16px}
   .holdings .desc{color:var(--muted);font-size:12px;margin-bottom:10px}
@@ -148,6 +148,10 @@
   <section class="focusbar" id="focusBar"></section>
 
   <section class="kpis" id="kpis"></section>
+
+  <section class="charts" id="pnlArea"></section>
+
+  <section class="charts" id="trendArea"></section>
 
   <section class="holdings" id="holdings"></section>
 
@@ -299,9 +303,9 @@ function render(hist){
     </table>`;
 
   // —— 图表 ——
+  // 版块顺序：8 张 KPI → 盈亏统计 → 总资产趋势 → 持仓明细 → 现货/理财构成 + 币种分布
   const dates=hist.map(h=>h.date);
-  $('#charts').innerHTML=`
-    <div class="card wide"><h2>总资产趋势</h2><div class="desc">全账户净值（现货+理财）随时间变化</div><div class="chart" id="c_total"></div></div>
+  $('#pnlArea').innerHTML=`
     <div class="card wide" id="pnlSection">
       <div class="pnl-head">
         <h2>盈亏统计</h2>
@@ -321,7 +325,10 @@ function render(hist){
       <div id="pnlCalendar"></div>
       <div class="pnl-hint">点击有数据的日期格子，可查看当天的总资产、持仓明细等全部指标；再点一次或点顶部按钮返回最新。</div>
       <div class="chart" id="c_pnl" style="display:none"></div>
-    </div>
+    </div>`;
+  $('#trendArea').innerHTML=`
+    <div class="card wide"><h2>总资产趋势</h2><div class="desc">全账户净值（现货+理财）随时间变化</div><div class="chart" id="c_total"></div></div>`;
+  $('#charts').innerHTML=`
     <div class="card"><h2>现货 / 理财构成</h2><div class="desc">两账户市值随时间的堆叠面积</div><div class="chart" id="c_split"></div></div>
     <div class="card"><h2>币种分布</h2><div class="desc">${isFocus?latest.date+' 快照':''}各币 USDT 市值（前 8 名）</div><div class="chart" id="c_coin"></div></div>`;
 
