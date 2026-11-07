@@ -356,29 +356,28 @@ function render(hist){
       label:{show:true,formatter:latest.date,color:'#9fe1ff',fontSize:11,position:'insideEndTop'},
       data:[{xAxis:latest.date}]};
   }
-  // 真实总盈亏曲线：逐段按「当日涨跌」上色——比前一日高=绿，比前一日低=红，
-  // 这样即使累计一直为正，也能看出哪几天在回撤
+  // 真实总盈亏曲线：颜色由数值正负决定（>=0 绿、<0 红）。
+  // 说明：ECharts 折线图不支持逐点 lineStyle 控制「两点之间的连线」，
+  // 所以线条颜色必须交给 series 级 lineStyle 或 visualMap；
+  // 这里用 visualMap 按数值正负给线分段上色，正值段绿、负值段红。
   const REAL_POS='#34d399', REAL_NEG='#f87171';
-  let prevReal=null;
-  const realData=hist.map(h=>{
-    const v=h.realPnlUsdt!=null?h.realPnlUsdt:((h.totalUsdt||0)-(h.netDepositUsdt||0));
-    const rising=prevReal==null?v>=0:v>=prevReal;
-    const c=rising?REAL_POS:REAL_NEG;
-    prevReal=v;
-    return {value:round2(v),itemStyle:{color:c},lineStyle:{color:c}};
-  });
+  const realData=hist.map(h=>round2(h.realPnlUsdt!=null?h.realPnlUsdt:((h.totalUsdt||0)-(h.netDepositUsdt||0))));
   const realSeries={
     name:'真实总盈亏',type:'line',yAxisIndex:1,data:realData,smooth:.25,
-    symbol:'circle',symbolSize:6,z:3,
-    lineStyle:{width:2},
+    symbol:'circle',symbolSize:6,z:3,color:REAL_POS,lineStyle:{width:2},
     // 0 基线：一眼看出哪些区间处于亏损
     markLine:{silent:true,symbol:'none',lineStyle:{color:'#5a6680',width:1,type:'dashed'},
       label:{show:false},data:[{yAxis:0}]}
   };
+  // 全线同号时直接给整条线定色（最稳），正负混合时交给 visualMap 分段上色
+  if(realData.length&&realData.every(v=>v>=0)){realSeries.lineStyle={color:REAL_POS,width:2};realSeries.itemStyle={color:REAL_POS};}
+  else if(realData.length&&realData.every(v=>v<0)){realSeries.lineStyle={color:REAL_NEG,width:2};realSeries.itemStyle={color:REAL_NEG};}
   echarts.init($('#c_total')).setOption({
     grid:{left:60,right:64,top:38,bottom:34},
     legend:{data:['总资产','真实总盈亏'],textStyle:{color:textColor,fontSize:11},top:0,itemWidth:14,itemHeight:9},
     tooltip:{...tip,valueFormatter:v=>fmt(v)+' USDT'},
+    visualMap:{show:false,seriesIndex:1,dimension:1,
+      pieces:[{gt:0,color:REAL_POS},{lte:0,color:REAL_NEG}]},
     xAxis:{type:'category',data:dates,...baseAxis,axisLabel:{color:textColor}},
     yAxis:[
       {type:'value',...baseAxis,axisLabel:{color:textColor,formatter:v=>fmt(v,0)}},
