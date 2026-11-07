@@ -88,8 +88,11 @@
   .cal-nav span{font-weight:700;font-size:14px;min-width:90px;text-align:center}
   .cal-grid{display:grid!important;grid-template-columns:repeat(7,1fr)!important;gap:5px}
   .cal-dow{text-align:center;color:var(--faint);font-size:11px;padding:4px 0;font-weight:500}
-  .cal-cell{background:var(--panel2);border-radius:8px;padding:6px 2px;text-align:center;min-height:50px;display:flex;flex-direction:column;justify-content:center}
+  .cal-cell{background:var(--panel2);border-radius:8px;padding:6px 2px;text-align:center;min-height:60px;display:flex;flex-direction:column;justify-content:center}
   .cal-cell .d{font-size:12px;font-weight:600;color:var(--muted)}
+  .cal-cell .f{font-size:9.5px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:700;line-height:1.2}
+  .cal-cell .f.in{color:var(--spot)}
+  .cal-cell .f.out{color:var(--neg)}
   .cal-cell .v{font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px;font-weight:600}
   .cal-cell.pos{background:rgba(52,211,153,0.14)}.cal-cell.pos .v{color:var(--pos)}
   .cal-cell.neg{background:rgba(248,113,113,0.14)}.cal-cell.neg .v{color:var(--neg)}
@@ -114,6 +117,8 @@
   .pnl-block{background:var(--panel2);border-radius:10px;padding:12px 10px;text-align:center;min-height:64px;display:flex;flex-direction:column;justify-content:center;transition:background .15s}
   .pnl-block .pb-label{font-size:12px;color:var(--muted);font-weight:500}
   .pnl-block .pb-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:4px}
+  .pnl-block .pb-flow{font-size:11px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+  .pnl-block .pb-flow.pos{color:var(--pos)} .pnl-block .pb-flow.neg{color:var(--neg)}
   .pnl-block.pos{background:rgba(52,211,153,0.14)}.pnl-block.pos .pb-val{color:var(--pos)}
   .pnl-block.neg{background:rgba(248,113,113,0.14)}.pnl-block.neg .pb-val{color:var(--neg)}
   .pnl-block.zero .pb-val{color:var(--faint)}
@@ -393,6 +398,26 @@ function render(hist){
     return Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0]));
   }
 
+  // 按同一周期聚合「当日净出入金」（入金为正、出金为负）
+  function aggFlow(period){
+    const g={};
+    hist.forEach(h=>{
+      const flow=h.netFlowUsdt!=null?h.netFlowUsdt:((h.depositUsdt||0)-(h.withdrawUsdt||0));
+      if(!flow)return;                       // 无出入金的日期不占位
+      const d=new Date(h.date+'T00:00:00');
+      let key;
+      if(period==='day')key=h.date;
+      else if(period==='week'){
+        const iso=getISOWeek(d);
+        key=iso.year+'-W'+String(iso.week).padStart(2,'0');
+      }
+      else if(period==='month')key=h.date.slice(0,7);
+      else key=String(d.getFullYear());
+      g[key]=(g[key]||0)+flow;
+    });
+    return g;
+  }
+
   // ISO 周号 → 日期范围（如 10.19-10.25）
   function weekDateRange(year, week){
     const jan4=new Date(Date.UTC(year,0,4));
@@ -409,6 +434,7 @@ function render(hist){
     const period=pnlState.period;
     if(period==='day'){renderCalendar();return;}
     const data=aggPnl(period);
+    const flowMap=aggFlow(period);
     let items=[], navLabel='', cols=2, showNav=false;
 
     if(period==='week'){
@@ -469,7 +495,13 @@ function render(hist){
       }
       const cls=val==null?'zero':(val>0?'pos':(val<0?'neg':'zero'));
       const vstr=val==null?'—':(val===0?'0.0':signed(val));
-      html+=`<div class="pnl-block ${cls}"><div class="pb-label">${label}</div><div class="pb-val">${vstr}</div></div>`;
+      // 该周期内的净出入金：正显绿、负显红
+      const flow=flowMap[key]||0;
+      const fstr=flow?(flow>0?'+':'')+fmt(flow,1):'';
+      const fcls=flow>0?'pos':(flow<0?'neg':'');
+      html+=`<div class="pnl-block ${cls}"><div class="pb-label">${label}</div><div class="pb-val">${vstr}</div>`
+        + (fstr?`<div class="pb-flow ${fcls}">${fstr}</div>`:'')
+        + `</div>`;
     });
     html+='</div>';
     $('#pnlCalendar').innerHTML=html;
@@ -512,11 +544,15 @@ function render(hist){
       if(rec)cls+=' has';                       // 有快照 → 可点击查看当日数据
       if(ds===focusDate)cls+=' sel';
       const valStr=v!=null?(v>=0?'+':'')+fmt(v,1):(isFuture?'—':'0.0');
+      // 当日净出入金：入金蓝色、出金红色；没有出入金则留空行保持高度一致
+      const flow=rec?(rec.netFlowUsdt!=null?rec.netFlowUsdt:((rec.depositUsdt||0)-(rec.withdrawUsdt||0))):0;
+      const fStr=flow?(flow>0?'+':'')+fmt(flow,1):'&nbsp;';
+      const fCls=flow>0?'in':(flow<0?'out':'');
       // 1号用grid-column-start定位到正确星期列，其余自动流动，无需空白占位格
       const colStyle=day===1?` style="grid-column-start:${startDow+1}"`:'';
       const dataAttr=rec?` data-date="${ds}"`:'';
       const titleAttr=rec?` title="点击查看 ${ds} 的完整数据"`:'';
-      html+=`<div class="${cls}"${colStyle}${dataAttr}${titleAttr}><div class="d">${day}</div><div class="v">${valStr}</div></div>`;
+      html+=`<div class="${cls}"${colStyle}${dataAttr}${titleAttr}><div class="d">${day}</div><div class="f ${fCls}">${fStr}</div><div class="v">${valStr}</div></div>`;
     }
     html+='</div>';
     $('#pnlCalendar').innerHTML=html;
