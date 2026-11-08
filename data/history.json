@@ -3434,5 +3434,97 @@
     "netDepositUsdt": 15365.0,
     "realPnlUsdt": 747.595414,
     "realPnlPct": 4.865574
+  },
+  {
+    "date": "2026-11-09",
+    "ts": 1794178840943,
+    "totalUsdt": 15922.218916,
+    "spotUsdt": 54.943123,
+    "earnUsdt": 15867.275793,
+    "marketPnlUsdt": -2.126233,
+    "depositUsdt": 0.0,
+    "withdrawUsdt": 0.0,
+    "netFlowUsdt": 0.0,
+    "flowNote": "",
+    "coinCount": 5,
+    "byCoin": [
+      {
+        "coin": "BTC",
+        "amount": 0.08251653,
+        "price": 74739.7,
+        "usdt": 6167.260697,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDC",
+        "amount": 5684.1905,
+        "price": 1.0,
+        "usdt": 5684.1905,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 43.851,
+        "price": 86.71,
+        "usdt": 3802.32021,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDT",
+        "amount": 213.50438596,
+        "price": 1.0,
+        "usdt": 213.504386,
+        "kind": "earn"
+      },
+      {
+        "coin": "BGB",
+        "amount": 12.548259156137513,
+        "price": 1.7303,
+        "usdt": 21.712253,
+        "kind": "spot"
+      },
+      {
+        "coin": "SOL",
+        "amount": 0.15192713,
+        "price": 86.71,
+        "usdt": 13.173601,
+        "kind": "spot"
+      },
+      {
+        "coin": "BTC",
+        "amount": 0.0001343831,
+        "price": 74739.7,
+        "usdt": 10.043753,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDC",
+        "amount": 9.9915084,
+        "price": 1.0,
+        "usdt": 9.991508,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.02200758,
+        "price": 1.0,
+        "usdt": 0.022008,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "poolx": {},
+    "manualFlow": {
+      "outflow_usdt": 0.0,
+      "inflow_usdt": 0.0,
+      "note": ""
+    },
+    "dailyChangeUsdt": -190.376498,
+    "dailyChangePct": -1.181538,
+    "cumChangeUsdt": -2231.28124,
+    "cumChangePct": -12.123642,
+    "netDepositUsdt": 15365.0,
+    "realPnlUsdt": 557.218916,
+    "realPnlPct": 3.626547
   }
 ]
