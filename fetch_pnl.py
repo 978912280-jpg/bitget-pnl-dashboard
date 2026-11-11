@@ -249,13 +249,63 @@ def build_snapshot(spot: dict, earn: dict, prices: dict,
     }
 
 
+# 远端历史快照兜底：Actions 的 checkout 偶尔会落后（例如被一个旧基线的 push 触发），
+# 只读本地文件会把中间几天快照整体丢掉。这里额外拉线上/仓库最新版本按日期合并。
+REMOTE_HISTORY_URLS = [
+    "https://978912280-jpg.github.io/bitget-pnl-dashboard/data/history.json",
+    "https://raw.githubusercontent.com/978912280-jpg/bitget-pnl-dashboard/main/data/history.json",
+]
+
+
+def fetch_remote_history() -> list:
+    for url in REMOTE_HISTORY_URLS:
+        try:
+            req = urllib.request.Request(
+                url + ("&" if "?" in url else "?") + f"t={int(time.time())}",
+                headers={"User-Agent": "bitget-pnl-dashboard"},
+            )
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            if isinstance(data, list) and data:
+                print(f"      [info] 已读取远端历史快照 {len(data)} 条（{url.split('/')[2]}）")
+                return data
+        except Exception as exc:
+            print(f"      [warn] 远端历史读取失败 {url.split('/')[2]}：{exc}")
+    return []
+
+
+def merge_histories(primary: list, fallback: list) -> list:
+    """按日期合并两份历史，同一天取时间戳更新的那条，最后按日期排序。"""
+    merged = {}
+    for src in (fallback or [], primary or []):
+        for h in src:
+            d = h.get("date")
+            if not d:
+                continue
+            cur = merged.get(d)
+            if cur is None:
+                merged[d] = h
+                continue
+            try:
+                if float(h.get("ts") or 0) > float(cur.get("ts") or 0):
+                    merged[d] = h
+            except Exception:
+                merged[d] = h
+    return [merged[k] for k in sorted(merged)]
+
+
 def load_history() -> list:
+    local = []
     if DATA_FILE.exists():
         try:
-            return json.loads(DATA_FILE.read_text("utf-8"))
+            local = json.loads(DATA_FILE.read_text("utf-8"))
         except Exception:
-            return []
-    return []
+            local = []
+    remote = fetch_remote_history()
+    merged = merge_histories(local, remote)
+    if len(merged) > len(local):
+        print(f"      [info] 合并远端历史：本地 {len(local)} 条 → {len(merged)} 条")
+    return merged
 
 
 POOLX_FILE = ROOT / "data" / "poolx_manual.json"

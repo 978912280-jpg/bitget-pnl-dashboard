@@ -614,7 +614,8 @@ function render(hist){
       if(isFuture&&v==null)cls+=' future';
       if(rec)cls+=' has';                       // 有快照 → 可点击查看当日数据
       if(ds===focusDate)cls+=' sel';
-      const valStr=v!=null?(v>=0?'+':'')+fmt(v,1):(isFuture?'—':'0.0');
+      // 没有当日快照就显示「—」，不要显示 0.0——那会被误读成“当天盈亏为零”
+      const valStr=v!=null?(v>=0?'+':'')+fmt(v,1):'—';
       // 当日净出入金：入金蓝色、出金红色；没有出入金则留空行保持高度一致
       const flow=rec?(rec.netFlowUsdt!=null?rec.netFlowUsdt:((rec.depositUsdt||0)-(rec.withdrawUsdt||0))):0;
       const fStr=flow?(flow>0?'+':'')+fmt(flow,1):'&nbsp;';
