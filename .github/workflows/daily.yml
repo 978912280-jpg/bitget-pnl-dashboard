@@ -43,8 +43,10 @@ permissions:
   id-token: write
 
 concurrency:
+  # 不用 cancel-in-progress：否则任何一次代码 push 的部署都会把正在跑的抓数任务中途杀掉，
+  # 可能正好死在写快照之前。改为排队执行，宁可等也不丢数据。
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   fetch-and-deploy:
@@ -168,7 +170,25 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/history.json data/poolx_manual.json data/manual_flow.json
           git commit -m "chore: 更新 $(date +%F) 资产快照与配置" || echo "无数据变更，跳过提交"
-          git push
+          # 远端可能刚被别的提交（代码 push / 并发运行）推进，直接 push 会被拒，
+          # 本次快照就白抓了。这里 rebase 到最新后重试，最多三次。
+          for i in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "已推送远端（第 $i 次尝试）"; break
+            fi
+            echo "push 被拒，拉取远端后重试（第 $i 次）"
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo "[warn] rebase 冲突，保留本地快照文件后强制对齐远端"
+              cp data/history.json /tmp/history_local.json
+              git reset --hard origin/main
+              cp /tmp/history_local.json data/history.json
+              git add data/history.json
+              git commit -m "chore: 更新 $(date +%F) 资产快照与配置（冲突后重放）" || true
+            fi
+            sleep 3
+          done
 
       - name: 组装站点文件
         run: |
