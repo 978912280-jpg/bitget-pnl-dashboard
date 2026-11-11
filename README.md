@@ -3,7 +3,7 @@
 把 Bitget 上「放进理财(Earn)的币无法计入盈利」的盲区补上：**同时读取现货 + 理财(Earn) 持仓**，折算 USDT，每天自动记录净值快照，并在 GitHub Pages 网页上展示总资产、现货/理财构成、每日盈亏与币种分布。
 
 - 抓数脚本零第三方依赖（仅 Python 标准库）
-- 每日北京时间 08:10 自动运行（GitHub Actions）
+- 每日北京时间 07:00 由 cron-job.org 触发 GitHub Actions（GitHub 自带 schedule 已移除）
 - 密钥全部走仓库 Secrets，不进入代码
 - 网页为单文件自包含页面，读取 `data/history.json` 动态渲染（ECharts）
 
@@ -35,7 +35,7 @@ bitget-pnl-dashboard/
    - 数据已写入 `data/history.json` 并提交
    - 页面地址为 `https://<你的用户名>.github.io/<仓库名>/`
 
-5. **等待自动运行**：此后每天 08:10（北京时间）自动抓取并刷新页面。
+5. **等待自动运行**：此后每天 07:00（北京时间）由 cron-job.org 触发抓取并刷新页面。
 
 ## 二、安全提示（重要）
 

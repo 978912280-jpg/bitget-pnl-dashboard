@@ -1,6 +1,6 @@
 name: 每日资产统计与 Pages 部署
 
-# 定时触发已全部交给外部服务 cron-job.org（北京时间每日 00:10 调用 workflow_dispatch）。
+# 定时触发已全部交给外部服务 cron-job.org（北京时间每日 07:00 调用 workflow_dispatch）。
 # GitHub 自带的 schedule 触发不准点，因此已移除，避免重复运行。
 # 每次被触发（dispatch / 定时）都会推送一次 Bark；push 触发只重新部署 Pages、不推送。
 on:
