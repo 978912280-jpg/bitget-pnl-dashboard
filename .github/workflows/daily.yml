@@ -46,7 +46,7 @@ concurrency:
   # 不用 cancel-in-progress：否则任何一次代码 push 的部署都会把正在跑的抓数任务中途杀掉，
   # 可能正好死在写快照之前。改为排队执行，宁可等也不丢数据。
   # 用独立组名：GitHub 内置的 Pages 构建也占用 "pages" 组，混用会互相排队卡死
-  group: "bitget-daily"
+  group: "bitget-daily-v2"
   cancel-in-progress: false
 
 jobs:
