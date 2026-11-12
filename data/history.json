@@ -3727,36 +3727,36 @@
   },
   {
     "date": "2026-11-12",
-    "ts": 1794438039493,
-    "totalUsdt": 15721.393085,
-    "spotUsdt": 52.956927,
-    "earnUsdt": 15668.436158,
-    "marketPnlUsdt": 0.050164,
+    "ts": 1794462686233,
+    "totalUsdt": 15376.694062,
+    "spotUsdt": 52.706825,
+    "earnUsdt": 15323.987237,
+    "marketPnlUsdt": -0.484819,
     "depositUsdt": 0.0,
-    "withdrawUsdt": 0.0,
-    "netFlowUsdt": 0.0,
+    "withdrawUsdt": 300.0,
+    "netFlowUsdt": -300.0,
     "flowNote": "",
     "coinCount": 6,
     "byCoin": [
       {
         "coin": "BTC",
         "amount": 0.08292532,
-        "price": 73918.26,
-        "usdt": 6129.695364,
+        "price": 73608.15,
+        "usdt": 6103.979393,
         "kind": "earn"
       },
       {
         "coin": "USDC",
-        "amount": 5698.67874806,
+        "amount": 5399.67874806,
         "price": 1.0,
-        "usdt": 5698.678748,
+        "usdt": 5399.678748,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 83.38,
-        "usdt": 3656.29638,
+        "price": 82.93,
+        "usdt": 3636.56343,
         "kind": "earn"
       },
       {
@@ -3769,59 +3769,59 @@
       {
         "coin": "BGB",
         "amount": 12.534365200647192,
-        "price": 1.7035,
-        "usdt": 21.352291,
+        "price": 1.7026,
+        "usdt": 21.34101,
         "kind": "spot"
       },
       {
         "coin": "SOL",
-        "amount": 0.1676414,
-        "price": 83.38,
-        "usdt": 13.97794,
+        "amount": 0.17287949,
+        "price": 82.93,
+        "usdt": 14.336896,
         "kind": "spot"
       },
       {
         "coin": "BTC",
-        "amount": 0.0001343837,
-        "price": 73918.26,
-        "usdt": 9.933409,
+        "amount": 0.0001350459,
+        "price": 73608.15,
+        "usdt": 9.940479,
         "kind": "spot"
       },
       {
         "coin": "RNVDA",
         "amount": 0.044,
-        "price": 159.44,
-        "usdt": 7.01536,
-        "kind": "spot"
-      },
-      {
-        "coin": "USDC",
-        "amount": 0.64384682,
-        "price": 1.0,
-        "usdt": 0.643847,
+        "price": 159.84,
+        "usdt": 7.03296,
         "kind": "spot"
       },
       {
         "coin": "USDT",
-        "amount": 0.03408009,
+        "amount": 0.05072175,
         "price": 1.0,
-        "usdt": 0.03408,
+        "usdt": 0.050722,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDC",
+        "amount": 0.00475807,
+        "price": 1.0,
+        "usdt": 0.004758,
         "kind": "spot"
       }
     ],
     "missing": [],
     "poolx": {},
     "manualFlow": {
-      "outflow_usdt": 0.0,
+      "outflow_usdt": 300.0,
       "inflow_usdt": 0.0,
-      "note": ""
+      "note": "转美股"
     },
-    "dailyChangeUsdt": 46.45727,
-    "dailyChangePct": 0.296379,
-    "cumChangeUsdt": -2432.107071,
-    "cumChangePct": -13.214827,
-    "netDepositUsdt": 15365.0,
-    "realPnlUsdt": 356.393085,
-    "realPnlPct": 2.319512
+    "dailyChangeUsdt": 1.758247,
+    "dailyChangePct": 0.011217,
+    "cumChangeUsdt": -2476.806094,
+    "cumChangePct": -13.457699,
+    "netDepositUsdt": 15065.0,
+    "realPnlUsdt": 311.694062,
+    "realPnlPct": 2.068995
   }
 ]

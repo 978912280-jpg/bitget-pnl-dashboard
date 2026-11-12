@@ -26,5 +26,10 @@
     "outflow_usdt": 1300.0,
     "inflow_usdt": 0.0,
     "note": "1000 提现，300 入美股"
+  },
+  "2026-11-12": {
+    "outflow_usdt": 300.0,
+    "inflow_usdt": 0.0,
+    "note": "转美股"
   }
 }
