@@ -4007,5 +4007,90 @@
     "netDepositUsdt": 15065.0,
     "realPnlUsdt": -396.171201,
     "realPnlPct": -2.629746
+  },
+  {
+    "date": "2026-11-15",
+    "ts": 1794697241397,
+    "totalUsdt": 13957.939109,
+    "spotUsdt": 43.705996,
+    "earnUsdt": 13914.233114,
+    "marketPnlUsdt": -7.104373,
+    "depositUsdt": 0.0,
+    "withdrawUsdt": 0.0,
+    "netFlowUsdt": 0.0,
+    "flowNote": "",
+    "coinCount": 5,
+    "byCoin": [
+      {
+        "coin": "BTC",
+        "amount": 0.08579119,
+        "price": 63718.33,
+        "usdt": 5466.471356,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDC",
+        "amount": 5399.67874806,
+        "price": 1.0,
+        "usdt": 5399.678748,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 43.851,
+        "price": 69.51,
+        "usdt": 3048.08301,
+        "kind": "earn"
+      },
+      {
+        "coin": "BGB",
+        "amount": 17.158744330551322,
+        "price": 1.5838,
+        "usdt": 27.176019,
+        "kind": "spot"
+      },
+      {
+        "coin": "SOL",
+        "amount": 0.18335567,
+        "price": 69.51,
+        "usdt": 12.745053,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDC",
+        "amount": 3.66142572,
+        "price": 1.0,
+        "usdt": 3.661426,
+        "kind": "spot"
+      },
+      {
+        "coin": "BTC",
+        "amount": 1.3735e-06,
+        "price": 63718.33,
+        "usdt": 0.087517,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.03598082,
+        "price": 1.0,
+        "usdt": 0.035981,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "poolx": {},
+    "manualFlow": {
+      "outflow_usdt": 0.0,
+      "inflow_usdt": 0.0,
+      "note": ""
+    },
+    "dailyChangeUsdt": -710.88969,
+    "dailyChangePct": -4.846261,
+    "cumChangeUsdt": -3895.561047,
+    "cumChangePct": -21.166489,
+    "netDepositUsdt": 15065.0,
+    "realPnlUsdt": -1107.060891,
+    "realPnlPct": -7.348562
   }
 ]
