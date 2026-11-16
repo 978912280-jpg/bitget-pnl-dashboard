@@ -4177,5 +4177,90 @@
     "netDepositUsdt": 15065.0,
     "realPnlUsdt": -816.281486,
     "realPnlPct": -5.418397
+  },
+  {
+    "date": "2026-11-17",
+    "ts": 1794870041663,
+    "totalUsdt": 14186.175465,
+    "spotUsdt": 43.733625,
+    "earnUsdt": 14142.44184,
+    "marketPnlUsdt": -0.548513,
+    "depositUsdt": 0.0,
+    "withdrawUsdt": 0.0,
+    "netFlowUsdt": 0.0,
+    "flowNote": "",
+    "coinCount": 5,
+    "byCoin": [
+      {
+        "coin": "BTC",
+        "amount": 0.08579119,
+        "price": 65259.47,
+        "usdt": 5598.68759,
+        "kind": "earn"
+      },
+      {
+        "coin": "USDC",
+        "amount": 5404.89966992,
+        "price": 1.0,
+        "usdt": 5404.89967,
+        "kind": "earn"
+      },
+      {
+        "coin": "SOL",
+        "amount": 43.851,
+        "price": 71.58,
+        "usdt": 3138.85458,
+        "kind": "earn"
+      },
+      {
+        "coin": "BGB",
+        "amount": 17.158744330551322,
+        "price": 1.6161,
+        "usdt": 27.730247,
+        "kind": "spot"
+      },
+      {
+        "coin": "SOL",
+        "amount": 0.19383185,
+        "price": 71.58,
+        "usdt": 13.874484,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDC",
+        "amount": 1.69661238,
+        "price": 1.0,
+        "usdt": 1.696612,
+        "kind": "spot"
+      },
+      {
+        "coin": "BTC",
+        "amount": 6.0727e-06,
+        "price": 65259.47,
+        "usdt": 0.396301,
+        "kind": "spot"
+      },
+      {
+        "coin": "USDT",
+        "amount": 0.03598082,
+        "price": 1.0,
+        "usdt": 0.035981,
+        "kind": "spot"
+      }
+    ],
+    "missing": [],
+    "poolx": {},
+    "manualFlow": {
+      "outflow_usdt": 0.0,
+      "inflow_usdt": 0.0,
+      "note": ""
+    },
+    "dailyChangeUsdt": -62.543049,
+    "dailyChangePct": -0.438938,
+    "cumChangeUsdt": -3667.324691,
+    "cumChangePct": -19.926369,
+    "netDepositUsdt": 15065.0,
+    "realPnlUsdt": -878.824535,
+    "realPnlPct": -5.833552
   }
 ]
