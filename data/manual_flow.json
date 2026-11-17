@@ -31,5 +31,10 @@
     "outflow_usdt": 300.0,
     "inflow_usdt": 0.0,
     "note": "转美股"
+  },
+  "2026-11-17": {
+    "outflow_usdt": 301.0,
+    "inflow_usdt": 0.0,
+    "note": "转美股"
   }
 }
