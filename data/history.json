@@ -4449,71 +4449,71 @@
   },
   {
     "date": "2026-11-20",
-    "ts": 1795129243739,
-    "totalUsdt": 13689.3399,
-    "spotUsdt": 46.302406,
-    "earnUsdt": 13643.037493,
-    "marketPnlUsdt": -1.016487,
+    "ts": 1795187550744,
+    "totalUsdt": 13286.780473,
+    "spotUsdt": 43.147227,
+    "earnUsdt": 13243.633246,
+    "marketPnlUsdt": -2.006363,
     "depositUsdt": 0.0,
-    "withdrawUsdt": 0.0,
-    "netFlowUsdt": 0.0,
+    "withdrawUsdt": 170.0,
+    "netFlowUsdt": -170.0,
     "flowNote": "",
     "coinCount": 6,
     "byCoin": [
       {
         "coin": "BTC",
         "amount": 0.08579119,
-        "price": 62213.8,
-        "usdt": 5337.395936,
+        "price": 61160.86,
+        "usdt": 5247.062961,
         "kind": "earn"
       },
       {
         "coin": "USDC",
-        "amount": 4726.89966992,
+        "amount": 4559.89966992,
         "price": 1.0,
-        "usdt": 4726.89967,
+        "usdt": 4559.89967,
         "kind": "earn"
       },
       {
         "coin": "SOL",
         "amount": 43.851,
-        "price": 73.28,
-        "usdt": 3213.40128,
+        "price": 70.19,
+        "usdt": 3077.90169,
         "kind": "earn"
       },
       {
         "coin": "XAUT",
         "amount": 0.1007,
-        "price": 3628.01,
-        "usdt": 365.340607,
+        "price": 3562.75,
+        "usdt": 358.768925,
         "kind": "earn"
       },
       {
-        "coin": "BGB",
-        "amount": 17.007469297451724,
-        "price": 1.5867,
-        "usdt": 26.985752,
+        "coin": "BTC",
+        "amount": 0.0002676879,
+        "price": 61160.86,
+        "usdt": 16.372022,
         "kind": "spot"
       },
       {
         "coin": "SOL",
-        "amount": 0.20954612,
-        "price": 73.28,
-        "usdt": 15.35554,
+        "amount": 0.21478421,
+        "price": 70.19,
+        "usdt": 15.075704,
         "kind": "spot"
       },
       {
-        "coin": "USDC",
-        "amount": 2.55234044,
-        "price": 1.0,
-        "usdt": 2.55234,
+        "coin": "BGB",
+        "amount": 7.007469297451725,
+        "price": 1.5715,
+        "usdt": 11.012238,
         "kind": "spot"
       },
       {
-        "coin": "BTC",
-        "amount": 1.31215e-05,
-        "price": 62213.8,
-        "usdt": 0.816338,
+        "coin": "XAUT",
+        "amount": 9.918e-05,
+        "price": 3562.75,
+        "usdt": 0.353354,
         "kind": "spot"
       },
       {
@@ -4524,26 +4524,26 @@
         "kind": "spot"
       },
       {
-        "coin": "XAUT",
-        "amount": 7.182e-05,
-        "price": 3628.01,
-        "usdt": 0.260564,
+        "coin": "USDC",
+        "amount": 0.00203708,
+        "price": 1.0,
+        "usdt": 0.002037,
         "kind": "spot"
       }
     ],
     "missing": [],
     "poolx": {},
     "manualFlow": {
-      "outflow_usdt": 0.0,
+      "outflow_usdt": 170.0,
       "inflow_usdt": 0.0,
       "note": ""
     },
-    "dailyChangeUsdt": 11.490041,
-    "dailyChangePct": 0.084005,
-    "cumChangeUsdt": -3863.160256,
-    "cumChangePct": -20.990439,
-    "netDepositUsdt": 14764.0,
-    "realPnlUsdt": -1074.6601,
-    "realPnlPct": -7.278922
+    "dailyChangeUsdt": -221.069386,
+    "dailyChangePct": -1.616258,
+    "cumChangeUsdt": -4095.719683,
+    "cumChangePct": -22.254048,
+    "netDepositUsdt": 14594.0,
+    "realPnlUsdt": -1307.219527,
+    "realPnlPct": -8.957239
   }
 ]
